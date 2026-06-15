@@ -146,6 +146,13 @@ export const useAppStore = create<AppStore>()(
         schedulePersist();
       },
 
+      deleteOpportunity(id) {
+        const current = get().data;
+        const newOpps = current.opportunities.filter(o => o.id !== id);
+        set({ data: { ...current, opportunities: newOpps } });
+        schedulePersist();
+      },
+
       moveOppStage(oppId, newStage) {
         const current = get().data;
         const now = new Date().toISOString();

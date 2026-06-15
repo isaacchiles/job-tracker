@@ -243,6 +243,7 @@ export interface AppStore {
   // Opportunity
   addOpportunity(input: Omit<Opportunity, 'id' | 'created_at' | 'updated_at' | 'tasks' | 'meetings' | 'contact_ids'>): string;
   updateOpportunity(id: string, patch: Partial<Omit<Opportunity, 'id' | 'tasks' | 'meetings' | 'contact_ids' | 'created_at'>>): void;
+  deleteOpportunity(id: string): void;
   moveOppStage(oppId: string, newStage: PipelineStage): void;
 
   // Tasks
