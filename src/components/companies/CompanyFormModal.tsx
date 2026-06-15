@@ -1,4 +1,6 @@
+import React from 'react';
 import { useForm } from 'react-hook-form';
+import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '../ui/Button';
@@ -34,13 +36,7 @@ interface CompanyFormModalProps {
 export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalProps) {
   const { addCompany, updateCompany } = useAppStore();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting, isSubmitted, touchedFields },
-  } = useForm<any>({
-    resolver: zodResolver(CompanyFormSchema) as any,
-    defaultValues: company ? ({
+  const defaultValues = useMemo(() => company ? ({
       name: company.name,
       website: company.website || '',
       industry: company.industry || '',
@@ -58,10 +54,39 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
       ai_native: false,
       hq_location: '',
       notes: '',
-    } as any),
+    } as any), [company]);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting, isSubmitted, touchedFields },
+  } = useForm<any>({
+    resolver: zodResolver(CompanyFormSchema) as any,
+    defaultValues,
   });
 
-
+  React.useEffect(() => {
+    if (isOpen) {
+      if (company) {
+        reset({
+          name: company.name,
+          website: company.website || '',
+          industry: company.industry || '',
+          funding_stage: company.funding_stage as any,
+          headcount: company.headcount as any ?? '',
+          ai_native: company.ai_native,
+          hq_location: company.hq_location || '',
+          notes: company.notes || '',
+        } as any);
+      } else {
+        reset({
+          name: '', website: '', industry: '', funding_stage: 'Unknown' as any, headcount: '' as any,
+          ai_native: false, hq_location: '', notes: '',
+        } as any);
+      }
+    }
+  }, [isOpen, company, reset]);
 
   const onSubmit = (data: any) => {
     const input = {
