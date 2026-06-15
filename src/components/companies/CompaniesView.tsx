@@ -220,11 +220,13 @@ export default function CompaniesView() {
         Persisted automatically. Use sample data from top bar if empty.
       </div>
 
-      <CompanyFormModal
-        isOpen={modalOpen}
-        onClose={closeModal}
-        company={editingCompany}
-      />
+      {modalOpen && (
+        <CompanyFormModal
+          isOpen={modalOpen}
+          onClose={closeModal}
+          company={editingCompany}
+        />
+      )}
 
       <DeleteCompanyConfirm
         isOpen={!!deleteSummary}

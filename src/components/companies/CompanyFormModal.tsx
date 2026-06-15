@@ -1,4 +1,3 @@
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,7 +37,6 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors, isSubmitting, isSubmitted, touchedFields },
   } = useForm<any>({
     resolver: zodResolver(CompanyFormSchema) as any,
@@ -63,25 +61,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
     } as any),
   });
 
-  React.useEffect(() => {
-    if (company) {
-      reset({
-        name: company.name,
-        website: company.website || '',
-        industry: company.industry || '',
-        funding_stage: company.funding_stage as any,
-        headcount: company.headcount as any ?? '',
-        ai_native: company.ai_native,
-        hq_location: company.hq_location || '',
-        notes: company.notes || '',
-      } as any);
-    } else {
-      reset({
-        name: '', website: '', industry: '', funding_stage: 'Unknown' as any, headcount: '' as any,
-        ai_native: false, hq_location: '', notes: '',
-      } as any);
-    }
-  }, [company, reset, isOpen]);
+
 
   const onSubmit = (data: any) => {
     const input = {
