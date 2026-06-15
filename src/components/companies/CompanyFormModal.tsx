@@ -8,6 +8,7 @@ import { Modal } from '../ui/Modal';
 import { useAppStore } from '@/lib/store';
 import { FUNDING_STAGES } from '@/lib/constants';
 import type { Company } from '@/lib/types';
+import { toast } from 'sonner';
 
 const CompanyFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -38,7 +39,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isSubmitted, touchedFields },
   } = useForm<any>({
     resolver: zodResolver(CompanyFormSchema) as any,
     defaultValues: company ? ({
@@ -99,7 +100,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
     } else {
       const res = addCompany(input as any);
       if (res.warning) {
-        alert(res.warning); // temporary; will use toast in later PR
+        toast.warning(res.warning);
       }
     }
     onClose();
@@ -123,7 +124,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
         <div>
           <label className="block text-sm font-medium mb-1">Name *</label>
           <Input {...register('name')} placeholder="Company name" />
-          {errors.name && <p className="text-red-500 text-xs mt-1">{String(errors.name.message || errors.name)}</p>}
+          {errors.name && (isSubmitted || touchedFields?.name) && <p className="text-red-500 text-xs mt-1">{String(errors.name.message || errors.name)}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
