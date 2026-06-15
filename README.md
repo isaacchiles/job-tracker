@@ -10,6 +10,23 @@ A personal application for job seekers to track companies, opportunities, contac
 **Design summary:** [docs/DESIGN_SUMMARY.md](docs/DESIGN_SUMMARY.md)  
 **Final review record:** [docs/REVIEW.md](docs/REVIEW.md)
 
+## Getting Started (PR 1 complete)
+
+```bash
+cd /path/to/job-tracker
+npm install          # only needed after fresh clone
+npm run dev
+```
+
+Open http://localhost:5173
+
+- Sidebar navigation between Dashboard, Kanban, Companies, Opportunities (stubs for now)
+- Dark mode toggle (bottom of sidebar)
+- Fully local (data in localStorage + export in future PRs)
+- Built with Vite + React + Tailwind + TypeScript
+
+Next PR (2) brings the real Zustand store + persistence + full types in action.
+
 ## User's Vision (as provided)
 
 ### Core Concepts
