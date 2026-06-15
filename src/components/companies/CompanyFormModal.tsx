@@ -34,6 +34,7 @@ interface CompanyFormModalProps {
 }
 
 export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalProps) {
+  console.log('CompanyFormModal rendering, isOpen:', isOpen, 'company:', company ? company.name : 'new');
   const { addCompany, updateCompany } = useAppStore();
 
   const defaultValues = useMemo(() => company ? ({
@@ -67,6 +68,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
   });
 
   React.useEffect(() => {
+    console.log('CompanyFormModal useEffect, isOpen:', isOpen, 'company:', company ? company.name : 'new');
     if (isOpen) {
       if (company) {
         reset({
@@ -86,7 +88,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
         } as any);
       }
     }
-  }, [isOpen, company, reset]);
+  }, [isOpen, company]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = (data: any) => {
     const input = {

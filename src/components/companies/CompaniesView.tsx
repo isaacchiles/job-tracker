@@ -29,6 +29,42 @@ export default function CompaniesView() {
 
   const allCompanies = getCompaniesWithStats();
 
+  const handleAddCompany = React.useCallback(() => {
+    console.log('handleAddCompany called, current modalOpen:', modalOpen);
+    setEditingCompany(undefined);
+    setModalOpen(true);
+    console.log('setModalOpen(true) called');
+  }, [modalOpen]); // modalOpen for the log, but can be [] if log removed
+
+  const handleQuickAddOpp = React.useCallback((companyId: string) => {
+    // Use global form from App for prefill (PR4 wiring)
+    (window as any).openOpportunityForm?.({ prefillCompanyId: companyId });
+  }, []);
+
+  const handleDeleteClick = React.useCallback((id: string, name: string) => {
+    const currentData = useAppStore.getState().data;
+    const summary = computeDeleteSummary(currentData, id);
+    setDeleteSummary(summary);
+    setDeletingCompany({ id, name });
+    setPendingDeleteId(id);
+  }, []);
+
+  const confirmDelete = React.useCallback(() => {
+    if (pendingDeleteId) {
+      const summary = deleteCompany(pendingDeleteId);
+      toast.error(`Deleted company. ${summary.removedPrimaryOpps} primary opps removed, ${summary.nulledViaOpps} via nulled.`);
+    }
+    setDeleteSummary(null);
+    setDeletingCompany(null);
+    setPendingDeleteId(null);
+  }, [pendingDeleteId, deleteCompany]);
+
+  const cancelDelete = React.useCallback(() => {
+    setDeleteSummary(null);
+    setDeletingCompany(null);
+    setPendingDeleteId(null);
+  }, []);
+
   const filtered = React.useMemo(() => {
     return allCompanies.filter((c: any) => {
       const matchesSearch =
@@ -39,7 +75,7 @@ export default function CompaniesView() {
     });
   }, [allCompanies, search, aiOnly]);
 
-  const columns = [
+  const columns = React.useMemo(() => [
     columnHelper.accessor('name', {
       header: 'Name',
       cell: (info: any) => (
@@ -86,8 +122,10 @@ export default function CompaniesView() {
             </button>
             <button
               onClick={() => {
+                console.log('Edit button clicked for company:', company.name);
                 setEditingCompany(company);
                 setModalOpen(true);
+                console.log('Edit: setModalOpen(true) called');
               }}
               className="underline hover:no-underline"
             >
@@ -103,7 +141,7 @@ export default function CompaniesView() {
         );
       },
     }),
-  ];
+  ], [data, handleQuickAddOpp, handleDeleteClick, setEditingCompany, setModalOpen]);
 
   const table = useReactTable({
     data: filtered,
@@ -112,44 +150,11 @@ export default function CompaniesView() {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  const handleAddCompany = () => {
-    setEditingCompany(undefined);
-    setModalOpen(true);
-  };
-
-  const handleDeleteClick = (id: string, name: string) => {
-    const currentData = useAppStore.getState().data;
-    const summary = computeDeleteSummary(currentData, id);
-    setDeleteSummary(summary);
-    setDeletingCompany({ id, name });
-    setPendingDeleteId(id);
-  };
-
-  const confirmDelete = () => {
-    if (pendingDeleteId) {
-      const summary = deleteCompany(pendingDeleteId);
-      toast.error(`Deleted company. ${summary.removedPrimaryOpps} primary opps removed, ${summary.nulledViaOpps} via nulled.`);
-    }
-    setDeleteSummary(null);
-    setDeletingCompany(null);
-    setPendingDeleteId(null);
-  };
-
-  const cancelDelete = () => {
-    setDeleteSummary(null);
-    setDeletingCompany(null);
-    setPendingDeleteId(null);
-  };
-
-  const handleQuickAddOpp = (companyId: string) => {
-    // Use global form from App for prefill (PR4 wiring)
-    (window as any).openOpportunityForm?.({ prefillCompanyId: companyId });
-  };
-
-  const closeModal = () => {
+  const closeModal = React.useCallback(() => {
+    console.log('closeModal called');
     setModalOpen(false);
     setEditingCompany(undefined);
-  };
+  }, []);
 
   return (
     <div>
@@ -221,11 +226,14 @@ export default function CompaniesView() {
       </div>
 
       {modalOpen && (
-        <CompanyFormModal
-          isOpen={modalOpen}
-          onClose={closeModal}
-          company={editingCompany}
-        />
+        <>
+          {console.log('Rendering CompanyFormModal in CompaniesView, modalOpen:', modalOpen, 'editingCompany:', editingCompany ? editingCompany.name : 'new')}
+          <CompanyFormModal
+            isOpen={modalOpen}
+            onClose={closeModal}
+            company={editingCompany}
+          />
+        </>
       )}
 
       <DeleteCompanyConfirm
