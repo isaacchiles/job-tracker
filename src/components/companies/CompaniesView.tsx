@@ -18,7 +18,7 @@ import { computeDeleteSummary } from '@/lib/utils';  // we'll make sure it's exp
 const columnHelper = createColumnHelper<any>();
 
 export default function CompaniesView() {
-  const { data, getCompaniesWithStats, deleteCompany, addOpportunity } = useAppStore();
+  const { data, getCompaniesWithStats, deleteCompany } = useAppStore();
   const [search, setSearch] = React.useState('');
   const [aiOnly, setAiOnly] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -79,7 +79,7 @@ export default function CompaniesView() {
         return (
           <div className="flex gap-1 text-xs">
             <button
-              onClick={() => handleQuickAddOpp(c.id, c.name)}
+              onClick={() => handleQuickAddOpp(c.id)}
               className="underline hover:no-underline text-primary"
             >
               + Opp
@@ -141,27 +141,9 @@ export default function CompaniesView() {
     setPendingDeleteId(null);
   };
 
-  const handleQuickAddOpp = (companyId: string, companyName: string) => {
-    const roleTitle = prompt(`Role title for new opportunity at ${companyName}?`, 'Software Engineer') || 'New Role';
-    addOpportunity({
-      company_id: companyId,
-      via_company_id: null,
-      role_title: roleTitle,
-      role_type: 'Full-time',
-      stage: 'Researching',
-      job_url: null,
-      location: null,
-      source: null,
-      priority: 'Medium',
-      ote: null,
-      equity: null,
-      title_bump: 'Same',
-      work_mode: 'Hybrid',
-      why_interested: null,
-      notes: null,
-      applied_at: null,
-    });
-    toast.success(`Added stub opportunity "${roleTitle}" (full form + detail in PR4/PR6)`);
+  const handleQuickAddOpp = (companyId: string) => {
+    // Use global form from App for prefill (PR4 wiring)
+    (window as any).openOpportunityForm?.(companyId);
   };
 
   const closeModal = () => {

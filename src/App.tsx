@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useAppStore, hydrateStore } from './lib/store'
 import { createSampleData } from './lib/persistence'
@@ -7,6 +7,7 @@ import DashboardView from './components/dashboard/DashboardView'
 import KanbanView from './components/kanban/KanbanView'
 import CompaniesView from './components/companies/CompaniesView'
 import OpportunitiesView from './components/opportunities/OpportunitiesView'
+import { OpportunityFormModal } from './components/opportunities/OpportunityFormModal'
 import { toast } from 'sonner'
 
 function App() {
@@ -54,6 +55,17 @@ function App() {
     input.click();
   };
 
+  // PR4: Global opportunity form for cross-view quick add (prefill from Companies)
+  const [oppFormOpen, setOppFormOpen] = useState(false);
+  const [oppEditing, setOppEditing] = useState<any>(undefined);
+  const [oppPrefillCompany, setOppPrefillCompany] = useState<string | undefined>(undefined);
+
+  (window as any).openOpportunityForm = (prefillCompanyId?: string) => {
+    setOppPrefillCompany(prefillCompanyId);
+    setOppEditing(undefined);
+    setOppFormOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AppShell>
@@ -73,6 +85,13 @@ function App() {
           <Route path="/opportunities" element={<OpportunitiesView />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+
+        <OpportunityFormModal 
+          isOpen={oppFormOpen} 
+          onClose={() => { setOppFormOpen(false); setOppPrefillCompany(undefined); setOppEditing(undefined); }} 
+          opportunity={oppEditing} 
+          prefillCompanyId={oppPrefillCompany} 
+        />
       </AppShell>
     </div>
   )
