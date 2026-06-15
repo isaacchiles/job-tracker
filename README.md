@@ -4,7 +4,7 @@ A personal application for job seekers to track companies, opportunities, contac
 
 **App name:** JobTracker (confirmed)
 
-**Current status:** Solid design approved (0 open issues after full write-review loop). Ready to implement.
+**Current status:** Core app complete (PR 1-6 implemented). Full Kanban with DND, Companies CRUD/table, Opportunities list+form, rich Opportunity Detail with tasks/contacts/meetings logs, live Dashboard. All local, persists, sample data. Ready for polish/tests.
 
 **Design document (authoritative spec + PR plan):** [docs/DESIGN.md](docs/DESIGN.md)  
 **Design summary:** [docs/DESIGN_SUMMARY.md](docs/DESIGN_SUMMARY.md)  

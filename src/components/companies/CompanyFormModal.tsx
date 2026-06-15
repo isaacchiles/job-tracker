@@ -34,7 +34,9 @@ interface CompanyFormModalProps {
 }
 
 export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalProps) {
-  console.log('CompanyFormModal rendering, isOpen:', isOpen, 'company:', company ? company.name : 'new');
+  if (isOpen) {
+    console.log('CompanyFormModal rendering, isOpen:', isOpen, 'company:', company ? company.name : 'new');
+  }
   const { addCompany, updateCompany } = useAppStore();
 
   const defaultValues = useMemo(() => company ? ({

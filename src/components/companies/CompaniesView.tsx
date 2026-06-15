@@ -18,7 +18,9 @@ import { computeDeleteSummary } from '@/lib/utils';  // we'll make sure it's exp
 const columnHelper = createColumnHelper<any>();
 
 export default function CompaniesView() {
-  const { data, getCompaniesWithStats, deleteCompany } = useAppStore();
+  const deleteCompany = useAppStore((s) => s.deleteCompany);
+  const companies = useAppStore((s) => s.data.companies);
+  const opportunities = useAppStore((s) => s.data.opportunities);
   const [search, setSearch] = React.useState('');
   const [aiOnly, setAiOnly] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -27,14 +29,26 @@ export default function CompaniesView() {
   const [deletingCompany, setDeletingCompany] = React.useState<{ id: string; name: string } | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null);
 
-  const allCompanies = getCompaniesWithStats();
+  const allCompanies = React.useMemo(() => {
+    return companies.map(company => {
+      const primary = opportunities.filter(o => o.company_id === company.id).length;
+      const via = opportunities.filter(o => o.via_company_id === company.id && o.company_id !== company.id).length;
+      return {
+        ...company,
+        primaryOppCount: primary,
+        viaOppCount: via,
+        totalOppCount: primary + via,
+        hasAINative: company.ai_native,
+      };
+    });
+  }, [companies, opportunities]);
 
   const handleAddCompany = React.useCallback(() => {
-    console.log('handleAddCompany called, current modalOpen:', modalOpen);
+    console.log('handleAddCompany called');
     setEditingCompany(undefined);
     setModalOpen(true);
     console.log('setModalOpen(true) called');
-  }, [modalOpen]); // modalOpen for the log, but can be [] if log removed
+  }, []);
 
   const handleQuickAddOpp = React.useCallback((companyId: string) => {
     // Use global form from App for prefill (PR4 wiring)
@@ -111,7 +125,7 @@ export default function CompaniesView() {
       header: 'Actions',
       cell: ({ row }: any) => {
         const c = row.original;
-        const company = data.companies.find((cc: any) => cc.id === c.id)!;
+        const company = companies.find((cc: any) => cc.id === c.id)!;
         return (
           <div className="flex gap-1 text-xs">
             <button
@@ -141,13 +155,15 @@ export default function CompaniesView() {
         );
       },
     }),
-  ], [data, handleQuickAddOpp, handleDeleteClick, setEditingCompany, setModalOpen]);
+  ], [companies, handleQuickAddOpp, handleDeleteClick]);
 
+  const coreRowModel = React.useMemo(() => getCoreRowModel(), []);
+  const filteredRowModel = React.useMemo(() => getFilteredRowModel(), []);
   const table = useReactTable({
     data: filtered,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    getCoreRowModel: coreRowModel,
+    getFilteredRowModel: filteredRowModel,
   });
 
   const closeModal = React.useCallback(() => {
@@ -155,6 +171,13 @@ export default function CompaniesView() {
     setModalOpen(false);
     setEditingCompany(undefined);
   }, []);
+
+  // Debug: log only on actual modalOpen changes (to detect if parent is thrashing)
+  React.useEffect(() => {
+    if (modalOpen) {
+      console.log('CompaniesView: modalOpen flipped to true, editing:', editingCompany ? editingCompany.name : 'new');
+    }
+  }, [modalOpen, editingCompany]);
 
   return (
     <div>
@@ -225,16 +248,11 @@ export default function CompaniesView() {
         Persisted automatically. Use sample data from top bar if empty.
       </div>
 
-      {modalOpen && (
-        <>
-          {console.log('Rendering CompanyFormModal in CompaniesView, modalOpen:', modalOpen, 'editingCompany:', editingCompany ? editingCompany.name : 'new')}
-          <CompanyFormModal
-            isOpen={modalOpen}
-            onClose={closeModal}
-            company={editingCompany}
-          />
-        </>
-      )}
+      <CompanyFormModal
+        isOpen={modalOpen}
+        onClose={closeModal}
+        company={editingCompany}
+      />
 
       <DeleteCompanyConfirm
         isOpen={!!deleteSummary}
