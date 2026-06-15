@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -11,8 +12,8 @@ interface ModalProps {
 export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
         className="bg-card rounded-lg shadow-xl w-full max-w-lg mx-4 overflow-hidden border"
         onClick={(e) => e.stopPropagation()}
@@ -30,6 +31,7 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
