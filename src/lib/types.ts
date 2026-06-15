@@ -132,8 +132,148 @@ export interface ImportResult {
   opportunitiesAdded: number;
   opportunitiesUpdated: number;
   contactsAdded: number;
+  contactsUpdated: number;
   tasksAdded: number;
+  tasksUpdated: number;
   meetingsAdded: number;
+  meetingsUpdated: number;
   versionMigrated: boolean;
-  warnings: string[];
+  warnings: string[];  // e.g. "3 dangling contact links cleaned", "1 company id collision resolved by updated_at", schema notes
+}
+
+// Zod schemas for validation (used in persistence import)
+import { z } from 'zod';
+
+export const PipelineStageSchema = z.enum(['Researching', 'Applied', 'Interviewing', 'Offer', 'Closed Won', 'Closed Lost']);
+export const RoleTypeSchema = z.enum(['Full-time', 'Contract', 'Internship', 'Other']);
+export const WorkModeSchema = z.enum(['Remote', 'Hybrid', 'Onsite']);
+export const TitleBumpSchema = z.enum(['Same', 'Medium', 'Large']);
+export const FundingStageSchema = z.enum(['Unknown', 'Bootstrapped', 'Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D+', 'Growth', 'Public']);
+export const MeetingTypeSchema = z.enum(['Phone', 'Video', 'Onsite', 'Other']);
+export const PrioritySchema = z.enum(['High', 'Medium', 'Low']);
+
+export const ContactSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  title: z.string().nullable(),
+  linkedin: z.string().nullable(),
+  notes: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const CompanySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  website: z.string().nullable(),
+  industry: z.string().nullable(),
+  funding_stage: FundingStageSchema,
+  headcount: z.number().nullable(),
+  ai_native: z.boolean(),
+  hq_location: z.string().nullable(),
+  notes: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  contacts: z.array(ContactSchema),
+});
+
+export const TaskSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  due: z.string().nullable(),
+  done: z.boolean(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const MeetingSchema = z.object({
+  id: z.string(),
+  date: z.string(),
+  type: MeetingTypeSchema,
+  attendees: z.string(),
+  notes: z.string().nullable(),
+  outcome: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const OpportunitySchema = z.object({
+  id: z.string(),
+  company_id: z.string(),
+  via_company_id: z.string().nullable(),
+  role_title: z.string(),
+  role_type: RoleTypeSchema,
+  stage: PipelineStageSchema,
+  job_url: z.string().nullable(),
+  location: z.string().nullable(),
+  source: z.string().nullable(),
+  priority: PrioritySchema,
+  ote: z.number().nullable(),
+  equity: z.string().nullable(),
+  title_bump: TitleBumpSchema,
+  work_mode: WorkModeSchema,
+  why_interested: z.string().nullable(),
+  notes: z.string().nullable(),
+  applied_at: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  tasks: z.array(TaskSchema),
+  meetings: z.array(MeetingSchema),
+  contact_ids: z.array(z.string()),
+});
+
+export const AppDataSchema = z.object({
+  version: z.literal(1),
+  companies: z.array(CompanySchema),
+  opportunities: z.array(OpportunitySchema),
+  meta: z.object({
+    last_exported_at: z.string().optional(),
+  }).optional(),
+});
+
+// Full store interface (re-exported/used by store.ts)
+export interface AppStore {
+  data: AppData;
+
+  // Company
+  addCompany(input: Omit<Company, 'id' | 'created_at' | 'updated_at' | 'contacts'>): { id: string; warning?: string };
+  updateCompany(id: string, patch: Partial<Omit<Company, 'id' | 'contacts' | 'created_at'>>): void;
+  deleteCompany(id: string): DeleteCompanySummary;
+
+  // Opportunity
+  addOpportunity(input: Omit<Opportunity, 'id' | 'created_at' | 'updated_at' | 'tasks' | 'meetings' | 'contact_ids'>): string;
+  updateOpportunity(id: string, patch: Partial<Omit<Opportunity, 'id' | 'tasks' | 'meetings' | 'contact_ids' | 'created_at'>>): void;
+  moveOppStage(oppId: string, newStage: PipelineStage): void;
+
+  // Tasks
+  addTaskToOpp(oppId: string, task: Omit<Task, 'id' | 'created_at' | 'updated_at'>): string;
+  updateTask(oppId: string, taskId: string, patch: Partial<Omit<Task, 'id' | 'created_at'>>): void;
+  toggleTaskDone(oppId: string, taskId: string): void;
+  deleteTask(oppId: string, taskId: string): void;
+
+  // Meetings
+  addMeetingToOpp(oppId: string, meeting: Omit<Meeting, 'id' | 'created_at' | 'updated_at'>): string;
+  updateMeeting(oppId: string, meetingId: string, patch: Partial<Omit<Meeting, 'id' | 'created_at'>>): void;
+  deleteMeeting(oppId: string, meetingId: string): void;
+
+  // Contacts
+  addContactToCompany(companyId: string, contact: Omit<Contact, 'id' | 'created_at' | 'updated_at'>): string;
+  updateContact(companyId: string, contactId: string, patch: Partial<Omit<Contact, 'id' | 'created_at'>>): void;
+  deleteContact(companyId: string, contactId: string): void;
+  linkContactToOpp(oppId: string, contactId: string): void;
+  unlinkContactFromOpp(oppId: string, contactId: string): void;
+
+  // Persistence
+  exportData(): AppData;
+  importData(data: AppData, mode: 'replace' | 'merge'): ImportResult;
+  loadFromStorage(): void;
+
+  // Selectors
+  getOpportunity(id: string): Opportunity | undefined;
+  getCompany(id: string): Company | undefined;
+  getNextActionForOpp(oppOrId: Opportunity | string): Task | null;
+  getOppsForCompany(companyId: string, options?: { includeVia?: boolean }): Opportunity[];
+  getAllOpenTasksSorted(): Array<{ task: Task; opp: Opportunity; company: Company }>;
+  getUpcomingTasks(limit?: number): Array<{ task: Task; opp: Opportunity; company: Company }>;
+  getCompaniesWithStats(): Array<Company & { primaryOppCount: number; viaOppCount: number; totalOppCount: number; hasAINative?: boolean }>;
 }
