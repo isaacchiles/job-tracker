@@ -13,10 +13,7 @@ interface Props {
 export default function StageColumn({ stage, opps }: Props) {
 
   const handleAdd = () => {
-    (window as any).openOpportunityForm?.({ prefill: { stage } }); // prefill stage if supported, else just open
-    // For now, since form has stage select, just open new
-    (window as any).openOpportunityForm?.();
-    // To prefill stage, we could enhance form later; for PR5 this is fine. User can set.
+    (window as any).openOpportunityForm?.({ prefillStage: stage });
   };
 
   return (

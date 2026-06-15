@@ -55,17 +55,20 @@ function App() {
     input.click();
   };
 
-  // PR4: Global opportunity form for cross-view quick add (prefill from Companies)
+  // PR4/PR5: Global opportunity form for cross-view quick add (prefill from Companies/Kanban)
   const [oppFormOpen, setOppFormOpen] = useState(false);
   const [oppEditing, setOppEditing] = useState<any>(undefined);
   const [oppPrefillCompany, setOppPrefillCompany] = useState<string | undefined>(undefined);
+  const [oppPrefillStage, setOppPrefillStage] = useState<string | undefined>(undefined);
 
-  (window as any).openOpportunityForm = (options?: {prefillCompanyId?: string, editOpportunity?: any}) => {
+  (window as any).openOpportunityForm = (options?: {prefillCompanyId?: string, editOpportunity?: any, prefillStage?: string}) => {
     if (options?.editOpportunity) {
       setOppEditing(options.editOpportunity);
       setOppPrefillCompany(undefined);
+      setOppPrefillStage(undefined);
     } else {
       setOppPrefillCompany(options?.prefillCompanyId);
+      setOppPrefillStage(options?.prefillStage);
       setOppEditing(undefined);
     }
     setOppFormOpen(true);
@@ -93,9 +96,10 @@ function App() {
 
         <OpportunityFormModal 
           isOpen={oppFormOpen} 
-          onClose={() => { setOppFormOpen(false); setOppPrefillCompany(undefined); setOppEditing(undefined); }} 
+          onClose={() => { setOppFormOpen(false); setOppPrefillCompany(undefined); setOppPrefillStage(undefined); setOppEditing(undefined); }} 
           opportunity={oppEditing} 
           prefillCompanyId={oppPrefillCompany} 
+          prefillStage={oppPrefillStage} 
         />
       </AppShell>
     </div>

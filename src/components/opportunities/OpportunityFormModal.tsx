@@ -37,9 +37,10 @@ interface Props {
   onClose: () => void;
   opportunity?: Opportunity;
   prefillCompanyId?: string;
+  prefillStage?: string;
 }
 
-export function OpportunityFormModal({ isOpen, onClose, opportunity, prefillCompanyId }: Props) {
+export function OpportunityFormModal({ isOpen, onClose, opportunity, prefillCompanyId, prefillStage }: Props) {
   const { data, addOpportunity, updateOpportunity } = useAppStore();
   const companies = data.companies;
 
@@ -109,13 +110,13 @@ export function OpportunityFormModal({ isOpen, onClose, opportunity, prefillComp
           notes: opportunity.notes || '',
           applied_at: opportunity.applied_at || '',
         } as any);
-      } else if (prefillCompanyId) {
+      } else {
         reset({
-          company_id: prefillCompanyId,
+          company_id: prefillCompanyId || '',
           via_company_id: '',
           role_title: '',
           role_type: 'Full-time',
-          stage: 'Researching',
+          stage: prefillStage || 'Researching',
           job_url: '',
           location: '',
           source: '',
@@ -130,7 +131,7 @@ export function OpportunityFormModal({ isOpen, onClose, opportunity, prefillComp
         } as any);
       }
     }
-  }, [isOpen, opportunity, prefillCompanyId, reset]);
+  }, [isOpen, opportunity, prefillCompanyId, prefillStage, reset]);
 
   const onSubmit = (formData: any) => {
     const input = {
