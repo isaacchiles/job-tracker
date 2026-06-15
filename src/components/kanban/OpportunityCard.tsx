@@ -16,7 +16,7 @@ export default function OpportunityCard({ opp, index }: Props) {
   const nextAction = getNextActionForOpp(opp);
 
   const handleClick = () => {
-    (window as any).openOpportunityForm?.({ editOpportunity: opp });
+    (window as any).openOpportunityDetail?.(opp);
   };
 
   const isAINative = company?.ai_native || viaCompany?.ai_native;

@@ -8,6 +8,7 @@ import KanbanView from './components/kanban/KanbanView'
 import CompaniesView from './components/companies/CompaniesView'
 import OpportunitiesView from './components/opportunities/OpportunitiesView'
 import { OpportunityFormModal } from './components/opportunities/OpportunityFormModal'
+import { OpportunityDetail } from './components/opportunities/OpportunityDetail'
 import { toast } from 'sonner'
 
 function App() {
@@ -74,6 +75,15 @@ function App() {
     setOppFormOpen(true);
   };
 
+  // PR6: Global opportunity detail for rich view (tasks, contacts, meetings)
+  const [oppDetailOpen, setOppDetailOpen] = useState(false);
+  const [oppDetail, setOppDetail] = useState<any>(undefined);
+
+  (window as any).openOpportunityDetail = (opp: any) => {
+    setOppDetail(opp);
+    setOppDetailOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AppShell>
@@ -100,6 +110,18 @@ function App() {
           opportunity={oppEditing} 
           prefillCompanyId={oppPrefillCompany} 
           prefillStage={oppPrefillStage} 
+        />
+
+        <OpportunityDetail 
+          isOpen={oppDetailOpen} 
+          onClose={() => { setOppDetailOpen(false); setOppDetail(undefined); }} 
+          opportunity={oppDetail} 
+          onEdit={() => {
+            if (oppDetail) {
+              setOppDetailOpen(false);
+              (window as any).openOpportunityForm?.({ editOpportunity: oppDetail });
+            }
+          }}
         />
       </AppShell>
     </div>

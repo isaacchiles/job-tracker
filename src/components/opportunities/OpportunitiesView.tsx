@@ -10,7 +10,6 @@ import { useAppStore } from '@/lib/store';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { OpportunityFormModal } from './OpportunityFormModal';
-import { Modal } from '../ui/Modal';
 import { toast } from 'sonner';
 import type { Opportunity } from '@/lib/types';
 import { STAGES, PRIORITIES } from '@/lib/constants';
@@ -24,7 +23,6 @@ export default function OpportunitiesView() {
   const [priorityFilter, setPriorityFilter] = React.useState<string>('');
   const [formOpen, setFormOpen] = React.useState(false);
   const [editingOpp, setEditingOpp] = React.useState<Opportunity | undefined>(undefined);
-  const [detailOpp, setDetailOpp] = React.useState<Opportunity | undefined>(undefined);
 
   const allOpps = data.opportunities;
 
@@ -67,7 +65,7 @@ export default function OpportunitiesView() {
         const o = row.original;
         return (
           <div className="flex gap-1 text-xs">
-            <button onClick={() => { setDetailOpp(o); }} className="underline">View</button>
+            <button onClick={() => { (window as any).openOpportunityDetail?.(o); }} className="underline">View</button>
             <button onClick={() => { setEditingOpp(o); setFormOpen(true); }} className="underline">Edit</button>
             <button onClick={() => {
               if (confirm('Delete this opportunity?')) {
@@ -167,32 +165,6 @@ export default function OpportunitiesView() {
         opportunity={editingOpp} 
       />
 
-      {/* Basic detail stub modal */}
-      {detailOpp && (
-        <Modal 
-          isOpen={!!detailOpp} 
-          onClose={() => setDetailOpp(undefined)} 
-          title={detailOpp.role_title}
-          footer={
-            <Button onClick={() => { 
-              setEditingOpp(detailOpp); 
-              setDetailOpp(undefined); 
-              setFormOpen(true); 
-            }}>Edit</Button>
-          }
-        >
-          <div className="space-y-2 text-sm">
-            <div><strong>Company:</strong> {getCompany(detailOpp.company_id)?.name} {detailOpp.via_company_id ? `(via ${getCompany(detailOpp.via_company_id)?.name})` : ''}</div>
-            <div><strong>Stage:</strong> {detailOpp.stage} | <strong>Priority:</strong> {detailOpp.priority}</div>
-            <div><strong>OTE:</strong> {detailOpp.ote ? `$${detailOpp.ote.toLocaleString()}` : '—'} | <strong>Equity:</strong> {detailOpp.equity || '—'}</div>
-            <div><strong>Work Mode:</strong> {detailOpp.work_mode} | <strong>Title Bump:</strong> {detailOpp.title_bump}</div>
-            {detailOpp.job_url && <div><a href={detailOpp.job_url} target="_blank" className="underline">Job posting</a></div>}
-            {detailOpp.why_interested && <div><strong>Why interested:</strong> {detailOpp.why_interested}</div>}
-            {detailOpp.notes && <div><strong>Notes:</strong> {detailOpp.notes}</div>}
-            <div className="text-xs text-muted-foreground mt-4">Full detail view with tasks, contacts, meetings in PR 6. Click Edit to modify.</div>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 }
