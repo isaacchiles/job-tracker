@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Editor / OS
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# Env / secrets (none expected for this local app)
+.env
+.env.local
+
+# App data (the JobTracker app will export its own JSON backups)
+# Do NOT commit real job data here
+data/
+*.json
+!package.json
+!package-lock.json
+!docs/*.md
+
+# Misc
+*.swp
+*~
