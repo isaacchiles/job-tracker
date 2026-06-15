@@ -60,9 +60,14 @@ function App() {
   const [oppEditing, setOppEditing] = useState<any>(undefined);
   const [oppPrefillCompany, setOppPrefillCompany] = useState<string | undefined>(undefined);
 
-  (window as any).openOpportunityForm = (prefillCompanyId?: string) => {
-    setOppPrefillCompany(prefillCompanyId);
-    setOppEditing(undefined);
+  (window as any).openOpportunityForm = (options?: {prefillCompanyId?: string, editOpportunity?: any}) => {
+    if (options?.editOpportunity) {
+      setOppEditing(options.editOpportunity);
+      setOppPrefillCompany(undefined);
+    } else {
+      setOppPrefillCompany(options?.prefillCompanyId);
+      setOppEditing(undefined);
+    }
     setOppFormOpen(true);
   };
 

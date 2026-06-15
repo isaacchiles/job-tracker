@@ -143,7 +143,7 @@ export default function CompaniesView() {
 
   const handleQuickAddOpp = (companyId: string) => {
     // Use global form from App for prefill (PR4 wiring)
-    (window as any).openOpportunityForm?.(companyId);
+    (window as any).openOpportunityForm?.({ prefillCompanyId: companyId });
   };
 
   const closeModal = () => {
