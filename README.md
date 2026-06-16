@@ -4,7 +4,7 @@ A personal application for job seekers to track companies, opportunities, contac
 
 **App name:** JobTracker (confirmed)
 
-**Current status:** Core app complete (PR 1-6 implemented). Full Kanban with DND, Companies CRUD/table, Opportunities list+form, rich Opportunity Detail with tasks/contacts/meetings logs, live Dashboard. All local, persists, sample data. Ready for polish/tests. (Render loop freeze on Companies Add/Edit Company fixed via table data stabilization + form mounting consistency.)
+**Current status:** All phases complete (PR 1-8). Full features: Kanban DND, Companies (CRUD + contractor flag + search), Opportunities + rich Detail (tasks/contacts/meetings), Dashboard (pipeline + upcoming table w/ toggles), global search, keyboard shortcuts (n / k / esc), CSV/JSON/FS manual export+import wizard (auto-backup + preview + replace/merge), last-saved indicator, overdue highlights, FS API (manual open/save in Chrome/Edge + fallback), polished UI/toasts/empty states. Local only (LS primary + manual file/JSON). (Prior freezes/fixes + Part-time role + relaxed website + is_contractor included.)
 
 **Design document (authoritative spec + PR plan):** [docs/DESIGN.md](docs/DESIGN.md)  
 **Design summary:** [docs/DESIGN_SUMMARY.md](docs/DESIGN_SUMMARY.md)  
@@ -20,12 +20,31 @@ npm run dev
 
 Open http://localhost:5173
 
-- Sidebar navigation between Dashboard, Kanban, Companies, Opportunities (stubs for now)
+- Sidebar navigation between Dashboard (pipeline + upcoming tasks w/ done toggles), Kanban (DND), Companies (table + form + contractor flag), Opportunities (list + full detail w/ tasks/contacts/meetings)
 - Dark mode toggle (bottom of sidebar)
-- Fully local (data in localStorage + export in future PRs)
-- Built with Vite + React + Tailwind + TypeScript
+- Global search (header + / key), keyboard shortcuts (n=new opp, /=search, k=kanban, esc=close)
+- Data: auto LS + Export JSON/CSV, Import wizard (backup+preview+replace/merge), manual FS "Save/Open file" (Chrome/Edge)
+- Last saved time, overdue highlights, sample data, toasts, responsive
+- Fully local (primary localStorage; manual JSON/CSV/file for backup/restore)
+- Built with Vite + React 19 + Tailwind v4 + TypeScript + zustand + RHF/Zod + tanstack table + pangea dnd
 
-Next PR (2) brings the real Zustand store + persistence + full types in action.
+All PRs (1-8) complete per DESIGN.md.
+
+## Keyboard Shortcuts
+- `n` — New opportunity form (from anywhere)
+- `/` — Focus search input on current page
+- `k` — Quick hint to Kanban
+- `Esc` — Close open details/modals (where supported)
+
+## Data & Persistence
+- Everything auto-saves to localStorage.
+- **Export JSON** / **Export CSV** — full or tabular backups.
+- **Import (wizard)** — always auto-exports current first, validates, preview counts, choose replace or merge.
+- **Save to file** / **Open file** — manual FS API (Chrome/Edge). Use for "real file on disk" workflow. Fallback to JSON export/import.
+- Last-saved time shown in header bar.
+- Load sample data (with safety export).
+
+See docs/DESIGN.md for full merge/delete semantics and safety guarantees.
 
 ## User's Vision (as provided)
 

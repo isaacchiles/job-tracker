@@ -88,13 +88,7 @@ export default function AppShell({ children }: AppShellProps) {
             Track • Prioritize • Follow up
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <button
-              className="px-3 py-1.5 rounded border text-xs hover:bg-accent"
-              onClick={() => alert('Import/Export + sample data coming in later PRs (full persistence in PR2)')}
-            >
-              Import / Export (stub)
-            </button>
-            <div className="text-xs px-2 py-0.5 bg-muted rounded">PR 1 UI shell</div>
+            <div className="text-xs px-2 py-0.5 bg-muted rounded">Data: LS + JSON + FS (manual)</div>
           </div>
         </header>
 
