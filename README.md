@@ -55,12 +55,24 @@ This produces:
 
 Simply open `JobTracker.html` (or `dist/index.html`) by double-clicking the file or using a `file://` URL in your browser.
 
+**How the single-file version works:**
+- Uses **hash-based routing** (`#/kanban`, `#/companies`, etc.) instead of BrowserRouter. This is required for `file://` to work (avoids "page not found" on nav and the Safari "outside the sandbox" main resource error).
 - Everything (React app, styles, logic) is inlined into a single ~600KB file.
 - Full functionality works using browser localStorage for persistence.
 - Great for easy sharing, emailing, or offline use as a "doc".
-- Note: Some features like the File System Access API ("Save/Open file") work best when served over http (use `npx serve dist` or similar) rather than pure `file://`. PWA install may not apply to the single file.
 
-This is the easiest "HTML doc" distribution format.
+**Browser notes:**
+- **Chrome/Edge recommended** for opening the raw `JobTracker.html`.
+- **Safari** is extremely strict on `file://` (the "ignoring request... outside the sandbox" error is a WebKit security restriction on local files). If you see it (especially on Dashboard), use Chrome instead, or serve the file (see below).
+- **Best experience overall** (no sandbox errors + full File System Access API): Serve it locally instead of opening the raw file:
+  ```bash
+  npx serve .
+  ```
+  Then open `http://localhost:3000/JobTracker.html`.
+
+PWA service worker registration is disabled in the single-file build (it would fail on `file://` anyway).
+
+This is the easiest "HTML doc" distribution format. Re-run `npm run build:html` after any code changes to update `JobTracker.html`.
 
 ## Offering Updates & How Users Get Them
 

@@ -6,12 +6,20 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [
+export default defineConfig(({ mode }) => {
+  const isSingleFile = mode === 'singlefile' || process.env.BUILD_SINGLE === 'true';
+
+  const plugins = [
     react(),
     tailwindcss(),
-    // PWA for installable experience when serving multiple files (see README)
-    VitePWA({
+    // Single-file plugin: produces a self-contained index.html (all JS/CSS inlined)
+    // Use `npm run build:html` to generate dist/index.html as a standalone HTML document
+    viteSingleFile(),
+  ];
+
+  // Only include PWA for normal multi-file builds (avoids SW registration issues on file:// single HTML)
+  if (!isSingleFile) {
+    plugins.splice(2, 0, VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
@@ -33,19 +41,20 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
       },
-    }),
-    // Single-file plugin: produces a self-contained index.html (all JS/CSS inlined)
-    // Use `npm run build:html` to generate dist/index.html as a standalone HTML document
-    viteSingleFile(),
-  ],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
+    }));
+  }
+
+  return {
+    plugins,
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
     },
-  },
-  build: {
-    // Recommended for single file to avoid some chunking issues
-    cssCodeSplit: false,
-    assetsInlineLimit: 10000000, // inline most assets
-  },
-})
+    build: {
+      // Recommended for single file to avoid some chunking issues
+      cssCodeSplit: false,
+      assetsInlineLimit: 10000000, // inline most assets
+    },
+  };
+});
