@@ -15,7 +15,7 @@ const CompanyFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   website: z.preprocess(
     (val) => (val === '' || val == null ? null : val),
-    z.string().url().nullable()
+    z.string().nullable()
   ),
   industry: z.string().optional().or(z.literal('')).transform(v => (v === '' || !v) ? null : v),
   funding_stage: z.enum(FUNDING_STAGES as any),
@@ -24,6 +24,7 @@ const CompanyFormSchema = z.object({
     z.number().nullable()
   ),
   ai_native: z.boolean(),
+  is_contractor: z.boolean(),
   hq_location: z.string().optional().or(z.literal('')).transform(v => (v === '' || !v) ? null : v),
   notes: z.string().optional().or(z.literal('')).transform(v => (v === '' || !v) ? null : v),
 });
@@ -50,6 +51,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
       funding_stage: company.funding_stage,
       headcount: company.headcount ?? '',
       ai_native: company.ai_native,
+      is_contractor: company.is_contractor ?? false,
       hq_location: company.hq_location || '',
       notes: company.notes || '',
     } as any) : ({
@@ -59,6 +61,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
       funding_stage: 'Unknown',
       headcount: '',
       ai_native: false,
+      is_contractor: false,
       hq_location: '',
       notes: '',
     } as any), [company]);
@@ -84,13 +87,14 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
           funding_stage: company.funding_stage as any,
           headcount: company.headcount as any ?? '',
           ai_native: company.ai_native,
+          is_contractor: company.is_contractor ?? false,
           hq_location: company.hq_location || '',
           notes: company.notes || '',
         } as any);
       } else {
         reset({
           name: '', website: '', industry: '', funding_stage: 'Unknown' as any, headcount: '' as any,
-          ai_native: false, hq_location: '', notes: '',
+          ai_native: false, is_contractor: false, hq_location: '', notes: '',
         } as any);
       }
     }
@@ -105,6 +109,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
       funding_stage: data.funding_stage,
       headcount: data.headcount != null && data.headcount !== '' ? Number(data.headcount) : null,
       ai_native: data.ai_native,
+      is_contractor: data.is_contractor,
       hq_location: data.hq_location || null,
       notes: data.notes || null,
     };
@@ -150,7 +155,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Website</label>
-            <Input {...register('website')} placeholder="https://..." />
+            <Input {...register('website')} placeholder="google.com or https://..." />
             {errors.website && (isSubmitted || touchedFields?.website) && <p className="text-red-500 text-xs mt-1">{String(errors.website.message || errors.website)}</p>}
           </div>
           <div>
@@ -178,6 +183,11 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
         <div className="flex items-center gap-2">
           <input type="checkbox" id="ai_native" {...register('ai_native')} className="h-4 w-4" />
           <label htmlFor="ai_native" className="text-sm font-medium">AI-native company</label>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input type="checkbox" id="is_contractor" {...register('is_contractor')} className="h-4 w-4" />
+          <label htmlFor="is_contractor" className="text-sm font-medium">Contracting / staffing firm</label>
         </div>
 
         <div>

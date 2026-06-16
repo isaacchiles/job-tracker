@@ -162,7 +162,7 @@ export function OpportunityFormModal({ isOpen, onClose, opportunity, prefillComp
   };
 
   const selectedCompanyId = watch('company_id');
-  const viaOptions = companies.filter(c => c.id !== selectedCompanyId);
+  const viaOptions = companies.filter(c => c.id !== selectedCompanyId && c.is_contractor);
 
   return (
     <Modal

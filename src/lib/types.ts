@@ -9,7 +9,7 @@ export type PipelineStage =
   | 'Closed Won'
   | 'Closed Lost';
 
-export type RoleType = 'Full-time' | 'Contract' | 'Internship' | 'Other';
+export type RoleType = 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Other';
 
 export type WorkMode = 'Remote' | 'Hybrid' | 'Onsite';
 
@@ -40,6 +40,7 @@ export interface Company {
   funding_stage: FundingStage;
   headcount: number | null;
   ai_native: boolean;
+  is_contractor: boolean;
   hq_location: string | null;
   notes: string | null;
   created_at: string;
@@ -145,7 +146,7 @@ export interface ImportResult {
 import { z } from 'zod';
 
 export const PipelineStageSchema = z.enum(['Researching', 'Applied', 'Interviewing', 'Offer', 'Closed Won', 'Closed Lost']);
-export const RoleTypeSchema = z.enum(['Full-time', 'Contract', 'Internship', 'Other']);
+export const RoleTypeSchema = z.enum(['Full-time', 'Part-time', 'Contract', 'Internship', 'Other']);
 export const WorkModeSchema = z.enum(['Remote', 'Hybrid', 'Onsite']);
 export const TitleBumpSchema = z.enum(['Same', 'Medium', 'Large']);
 export const FundingStageSchema = z.enum(['Unknown', 'Bootstrapped', 'Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D+', 'Growth', 'Public']);
@@ -170,6 +171,7 @@ export const CompanySchema = z.object({
   funding_stage: FundingStageSchema,
   headcount: z.number().nullable(),
   ai_native: z.boolean(),
+  is_contractor: z.boolean().default(false),
   hq_location: z.string().nullable(),
   notes: z.string().nullable(),
   created_at: z.string(),

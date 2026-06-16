@@ -98,6 +98,9 @@ export default function CompaniesView() {
           {info.row.original.hasAINative && (
             <span className="ai-native ml-2 px-1.5 py-0.5 rounded text-[10px]">AI</span>
           )}
+          {info.row.original.is_contractor && (
+            <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-700">Contractor</span>
+          )}
         </div>
       ),
     }),
