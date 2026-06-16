@@ -13,7 +13,10 @@ import { toast } from 'sonner';
 
 const CompanyFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  website: z.string().url().optional().or(z.literal('')).transform(v => (v === '' || !v) ? null : v),
+  website: z.preprocess(
+    (val) => (val === '' || val == null ? null : val),
+    z.string().url().nullable()
+  ),
   industry: z.string().optional().or(z.literal('')).transform(v => (v === '' || !v) ? null : v),
   funding_stage: z.enum(FUNDING_STAGES as any),
   headcount: z.preprocess(
@@ -37,7 +40,8 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
   if (isOpen) {
     console.log('CompanyFormModal rendering, isOpen:', isOpen, 'company:', company ? company.name : 'new');
   }
-  const { addCompany, updateCompany } = useAppStore();
+  const addCompany = useAppStore((s) => s.addCompany);
+  const updateCompany = useAppStore((s) => s.updateCompany);
 
   const defaultValues = useMemo(() => company ? ({
       name: company.name,
@@ -93,6 +97,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
   }, [isOpen, company]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = (data: any) => {
+    console.log('CompanyForm onSubmit called, raw data:', data);
     const input = {
       name: data.name,
       website: data.website || null,
@@ -105,13 +110,19 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
     };
 
     if (company) {
+      console.log('Updating company', company.id, 'with:', input);
       updateCompany(company.id, input as any);
+      toast.success(`Company "${input.name}" updated`);
     } else {
+      console.log('Calling addCompany with:', input);
       const res = addCompany(input as any);
+      console.log('addCompany result:', res);
       if (res.warning) {
         toast.warning(res.warning);
       }
+      toast.success(`Company "${input.name}" added`);
     }
+    console.log('onSubmit complete, calling onClose');
     onClose();
   };
 
@@ -140,6 +151,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
           <div>
             <label className="block text-sm font-medium mb-1">Website</label>
             <Input {...register('website')} placeholder="https://..." />
+            {errors.website && (isSubmitted || touchedFields?.website) && <p className="text-red-500 text-xs mt-1">{String(errors.website.message || errors.website)}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Industry</label>
@@ -159,6 +171,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
           <div>
             <label className="block text-sm font-medium mb-1">Headcount</label>
             <Input type="number" {...register('headcount')} placeholder="e.g. 150" />
+            {errors.headcount && (isSubmitted || touchedFields?.headcount) && <p className="text-red-500 text-xs mt-1">{String(errors.headcount.message || errors.headcount)}</p>}
           </div>
         </div>
 
