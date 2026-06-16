@@ -49,7 +49,11 @@ To turn the entire app into **one standalone HTML file** (no Node.js, no server,
 npm run build:html
 ```
 
-Then simply open `dist/index.html` (double-click the file or use `file://` URL in your browser).
+This produces:
+- `dist/index.html` (inlined)
+- `JobTracker.html` (copy at project root for easy access)
+
+Simply open `JobTracker.html` (or `dist/index.html`) by double-clicking the file or using a `file://` URL in your browser.
 
 - Everything (React app, styles, logic) is inlined into a single ~600KB file.
 - Full functionality works using browser localStorage for persistence.
