@@ -36,7 +36,7 @@ export function OpportunityDetail({ isOpen, onClose, opportunity, onEdit }: Prop
       footer={
         <>
           <Button variant="outline" onClick={onClose}>Close</Button>
-          {onEdit && <Button onClick={onEdit}>Edit Scalars</Button>}
+          {onEdit && <Button onClick={onEdit}>Edit Opportunity</Button>}
         </>
       }
     >
@@ -152,7 +152,7 @@ export function OpportunityDetail({ isOpen, onClose, opportunity, onEdit }: Prop
         </div>
 
         <div className="text-xs text-muted-foreground">
-          All changes save automatically. Click "Edit Scalars" for full form if needed.
+          All changes save automatically. Click "Edit Opportunity" for the full form if needed.
         </div>
       </div>
     </Modal>

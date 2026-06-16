@@ -51,7 +51,7 @@ export interface Contact {
 
 export interface Opportunity {
   id: string;
-  company_id: string;               // Primary target company (required)
+  company_id: string | null;        // Primary target company (can be added later)
   via_company_id: string | null;    // Optional contracting/staffing firm
   role_title: string;
   role_type: RoleType;
@@ -191,7 +191,7 @@ export const MeetingSchema = z.object({
 
 export const OpportunitySchema = z.object({
   id: z.string(),
-  company_id: z.string(),
+  company_id: z.string().nullable().or(z.literal('')).transform(v => v === '' ? null : v),
   via_company_id: z.string().nullable(),
   role_title: z.string(),
   role_type: RoleTypeSchema,
@@ -263,7 +263,7 @@ export interface AppStore {
 
   // Selectors
   getOpportunity(id: string): Opportunity | undefined;
-  getCompany(id: string): Company | undefined;
+  getCompany(id: string | null): Company | undefined;
   getNextActionForOpp(oppOrId: Opportunity | string): Task | null;
   getOppsForCompany(companyId: string, options?: { includeVia?: boolean }): Opportunity[];
   getAllOpenTasksSorted(): Array<{ task: Task; opp: Opportunity; company: Company }>;

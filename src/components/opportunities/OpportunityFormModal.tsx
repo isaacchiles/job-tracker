@@ -12,7 +12,7 @@ import {
 import type { Opportunity } from '@/lib/types';
 
 const OpportunityFormSchema = z.object({
-  company_id: z.string().min(1, 'Company required'),
+  company_id: z.string().nullable().or(z.literal('')).transform(v => v === '' ? null : v),
   via_company_id: z.string().nullable().or(z.literal('')).transform(v => v === '' ? null : v),
   role_title: z.string().min(1, 'Role title required'),
   role_type: z.enum(ROLE_TYPES as any),
@@ -53,7 +53,7 @@ export function OpportunityFormModal({ isOpen, onClose, opportunity, prefillComp
   } = useForm<any>({
     resolver: zodResolver(OpportunityFormSchema) as any,
     defaultValues: opportunity ? {
-      company_id: opportunity.company_id,
+      company_id: opportunity.company_id || '',
       via_company_id: opportunity.via_company_id || '',
       role_title: opportunity.role_title,
       role_type: opportunity.role_type,
@@ -135,7 +135,7 @@ export function OpportunityFormModal({ isOpen, onClose, opportunity, prefillComp
 
   const onSubmit = (formData: any) => {
     const input = {
-      company_id: formData.company_id,
+      company_id: formData.company_id || null,
       via_company_id: formData.via_company_id || null,
       role_title: formData.role_title,
       role_type: formData.role_type,
@@ -183,7 +183,7 @@ export function OpportunityFormModal({ isOpen, onClose, opportunity, prefillComp
           <div>
             <label className="block mb-1">Target Company *</label>
             <select {...register('company_id')} className="w-full border rounded p-2 bg-background">
-              <option value="">Select company...</option>
+              <option value="">No company yet (can assign later)</option>
               {companies.map(c => (
                 <option key={c.id} value={c.id}>{c.name}{c.ai_native ? ' (AI)' : ''}</option>
               ))}

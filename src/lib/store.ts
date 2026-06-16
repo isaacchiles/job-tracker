@@ -473,7 +473,8 @@ export const useAppStore = create<AppStore>()(
         return get().data.opportunities.find(o => o.id === id);
       },
 
-      getCompany(id) {
+      getCompany(id: string | null) {
+        if (!id) return undefined;
         return get().data.companies.find(c => c.id === id);
       },
 

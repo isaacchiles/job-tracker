@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useAppStore, hydrateStore } from './lib/store'
@@ -28,6 +28,7 @@ function App() {
   const { exportData, importData, data } = useAppStore();
 
   const [lastSaved, setLastSaved] = useState('just now');
+
   useEffect(() => {
     const unsub = useAppStore.subscribe(
       (s) => s.data,
@@ -35,6 +36,42 @@ function App() {
     );
     return unsub;
   }, []);
+
+  // Compute last backup age from meta (set on every export)
+  const lastBackupAge = useMemo(() => {
+    const lastExp = data.meta?.last_exported_at;
+    if (!lastExp) return 'Never';
+    const ageMs = Date.now() - new Date(lastExp).getTime();
+    const days = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+    return days === 0 ? 'Today' : `${days} day${days > 1 ? 's' : ''} ago`;
+  }, [data.meta?.last_exported_at]);
+
+  // #3: Intrusive backup reminder on first load if >3 days since last export
+  useEffect(() => {
+    const lastExp = data.meta?.last_exported_at;
+    let days = 999;
+    if (lastExp) {
+      days = Math.floor( (Date.now() - new Date(lastExp).getTime()) / (1000*60*60*24) );
+    }
+    if (days >= 3) {
+      setTimeout(() => {
+        toast.warning(
+          `It's been ${days === 999 ? 'a while' : days + ' days'} since your last backup. Your data is important — export now?`,
+          {
+            duration: 10000,
+            action: {
+              label: 'Export JSON',
+              onClick: () => handleExport(),
+            },
+          }
+        );
+      }, 2500); // slightly delayed so UI settles
+    } else if (!lastExp) {
+      setTimeout(() => {
+        toast.info('No backups yet. Export JSON or Save to file regularly to protect your important data.', { duration: 8000 });
+      }, 3000);
+    }
+  }, []); // run once on mount
 
   const handleLoadSample = () => {
     const sample = createSampleData();
@@ -56,7 +93,7 @@ function App() {
       csvLines.push(`company,${c.id},${JSON.stringify(c.name || '')},${c.website || ''},${c.industry || ''},${c.funding_stage},${c.headcount ?? ''},${c.ai_native},${c.hq_location || ''},${JSON.stringify(c.notes || '')},,,,,,,,${c.id},`);
     });
     data.opportunities.forEach((o: any) => {
-      csvLines.push(`opportunity,${o.id},,,,,,,,${JSON.stringify(o.role_title || '')},${o.role_type},${o.stage},${o.priority},${o.ote ?? ''},${o.equity || ''},${o.location || ''},${o.source || ''},${o.company_id},${o.via_company_id || ''}`);
+      csvLines.push(`opportunity,${o.id},,,,,,,,${JSON.stringify(o.role_title || '')},${o.role_type},${o.stage},${o.priority},${o.ote ?? ''},${o.equity || ''},${o.location || ''},${o.source || ''},${o.company_id || ''},${o.via_company_id || ''}`);
     });
     const csv = csvLines.join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -225,7 +262,7 @@ function App() {
           <button onClick={handleSaveToFile} className="underline">Save to file</button>
           <button onClick={handleOpenFile} className="underline">Open file</button>
           <button onClick={openImportWizard} className="underline">Import (wizard)</button>
-          <span className="ml-auto text-muted-foreground">Companies: {data.companies.length} • Opps: {data.opportunities.length} • Saved: {lastSaved}</span>
+          <span className="ml-auto text-muted-foreground">Companies: {data.companies.length} • Opps: {data.opportunities.length} • Saved: {lastSaved} • Backup: {lastBackupAge}</span>
           <input
             type="text"
             placeholder="Global search (press / )..."

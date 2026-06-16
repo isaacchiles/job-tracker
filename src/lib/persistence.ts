@@ -9,8 +9,22 @@ export function loadFromStorage(): AppData | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    const validated = AppDataSchema.parse(parsed);
-    return validated;
+    try {
+      return AppDataSchema.parse(parsed);
+    } catch (schemaErr) {
+      console.warn('Schema validation failed, attempting best-effort recovery from old/corrupt data:', schemaErr);
+      if (parsed && typeof parsed === 'object' && Array.isArray(parsed.companies) && Array.isArray(parsed.opportunities)) {
+        // Recover what we can; sub-entities may be partial but UI should tolerate
+        const recovered: AppData = {
+          version: 1,
+          companies: parsed.companies || [],
+          opportunities: parsed.opportunities || [],
+          meta: parsed.meta || {},
+        };
+        return recovered;
+      }
+      return null;
+    }
   } catch (e) {
     console.warn('Failed to load from storage (corrupt or old schema):', e);
     // For important user data: never silently delete. Return null so app can warn and offer recovery.
