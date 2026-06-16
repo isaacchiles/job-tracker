@@ -41,6 +41,23 @@ All PRs (1-8) complete per DESIGN.md.
   - Once installed, it runs like a native app (standalone window, offline capable via service worker).
   - Updates: the PWA auto-checks for new versions when you run a fresh build/serve; it will update in background and prompt to reload.
 
+### Packaging as a Self-Contained Single HTML Document
+
+To turn the entire app into **one standalone HTML file** (no Node.js, no server, no extra files - just open the .html in your browser):
+
+```bash
+npm run build:html
+```
+
+Then simply open `dist/index.html` (double-click the file or use `file://` URL in your browser).
+
+- Everything (React app, styles, logic) is inlined into a single ~600KB file.
+- Full functionality works using browser localStorage for persistence.
+- Great for easy sharing, emailing, or offline use as a "doc".
+- Note: Some features like the File System Access API ("Save/Open file") work best when served over http (use `npx serve dist` or similar) rather than pure `file://`. PWA install may not apply to the single file.
+
+This is the easiest "HTML doc" distribution format.
+
 ## Offering Updates & How Users Get Them
 
 Since this is a client-side local web app (no backend server):
@@ -48,10 +65,40 @@ Since this is a client-side local web app (no backend server):
 - **For developers / you (Isaac)**: Keep the repo in git. To offer updates:
   1. Pull latest changes: `git pull`
   2. Install any new deps: `npm install`
-  3. Rebuild if needed: `npm run build`
-  4. Users re-run `npm run dev` or re-serve `dist/`.
-  - Share via git (clone), zip of the folder, or host the built `dist/` on a simple static site (Netlify, GitHub Pages, Vercel free tier) for easy access.
-  - PWA makes "updates" feel seamless (auto SW update).
+  3. Rebuild if needed: `npm run build` (or `npm run build:html` for the single HTML)
+  4. Users re-run `npm run dev`, re-serve `dist/`, or open the new single `dist/index.html`.
+  - Share via git (clone), zip of the folder, or host the built `dist/` (or just the single index.html) on a simple static site (Netlify, GitHub Pages, Vercel free tier) for easy access.
+  - PWA makes "updates" feel seamless (auto SW update) when serving the multi-file build.
+
+### Publishing to a Git Repo on Your GitHub Account
+
+To post this as a public (or private) Git repo attached solely to your account (e.g. under https://github.com/isaac):
+
+1. On GitHub (while logged into your account):
+   - Go to https://github.com/new
+   - Name: `job-tracker` (or `jobtracker-app`, whatever you prefer)
+   - Description: "Personal job seeker tracker - companies, opportunities, contacts, meetings. Local-first, runs as single HTML or web app."
+   - Public (for sharing) or Private
+   - **Do NOT** check "Add a README file" or initialize with anything (we'll push existing local repo)
+   - Create repository.
+
+2. Back in your terminal (in the job-tracker folder):
+   ```bash
+   # Add the remote (replace 'isaac' with your exact GitHub username, and repo name if different)
+   git remote add origin https://github.com/isaac/job-tracker.git
+
+   # Push (assuming branch is 'main')
+   git branch -M main
+   git push -u origin main
+   ```
+
+3. Done! Your full history, code, and the single HTML packaging is now on your GitHub.
+
+- You can later enable GitHub Pages (in repo Settings > Pages) to host the single `dist/index.html` or full dist/ for easy web access (choose "Deploy from a branch" or use Actions for single-file hosting).
+- For the single HTML specifically: After push, you (or others) can download the raw `dist/index.html` from the repo or use raw.githubusercontent.com links.
+- To keep it "your only repo": This becomes the canonical source. Future updates via PRs or direct pushes from your account.
+
+If you want the repo name or visibility different, or need help with GitHub Pages setup for the HTML doc, just say!
 
 - **For end users**: 
   - If running from source: git pull + npm install + restart.
