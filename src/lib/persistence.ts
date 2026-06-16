@@ -13,6 +13,8 @@ export function loadFromStorage(): AppData | null {
     return validated;
   } catch (e) {
     console.warn('Failed to load from storage (corrupt or old schema):', e);
+    // For important user data: never silently delete. Return null so app can warn and offer recovery.
+    // User should rely on their manual exports / "Save to file" for safety.
     return null;
   }
 }

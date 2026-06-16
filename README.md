@@ -2,6 +2,60 @@
 
 A personal application for job seekers to track companies, opportunities, contacts, and meetings in a structured way.
 
+## For non-technical users (just want to use the app)
+
+**Easiest option (recommended):** Open it directly in your browser — no download or installation required.
+
+→ **[Open JobTracker in your browser](https://isaacchiles.github.io/job-tracker/JobTracker.html)**
+
+(After I enable hosting on GitHub Pages — it will load the full app instantly.)
+
+**Alternative: Download the single file**
+1. Go to: https://github.com/isaacchiles/job-tracker/blob/main/JobTracker.html
+2. Click the **Download** button (top right on the file page)
+3. Double-click the downloaded `JobTracker.html` file to open it in your browser.
+
+(Direct raw link for advanced users: https://raw.githubusercontent.com/isaacchiles/job-tracker/main/JobTracker.html — right-click and "Save link as...")
+
+**Tips for everyone:**
+- Works completely offline once opened.
+- Your data is saved automatically in the browser. Use the **Export JSON** button (or **Save to file**) in the app to make backups.
+- Best with **Chrome** or **Microsoft Edge**. Safari can be picky with downloaded files.
+- If the file doesn't open properly, try right-clicking the download link above and choosing "Save link as...", or use the browser link instead.
+
+### Data Protection & Updating the App (Critical)
+
+**Will updating the app delete your data?**
+
+**No — updating the app code does not delete your stored data.**
+
+- The app stores everything in your browser's `localStorage` under a stable key (`jobtracker:data`).
+- Replacing the `JobTracker.html` file (or deploying a new version to the website) does **not** clear or overwrite your localStorage.
+- Your companies, opportunities, tasks, notes, etc. remain exactly as they were.
+
+**However, you are ultimately responsible for your data** because this is a local app with no cloud backup. "Super important" data can be lost if:
+
+- You clear your browser data / use private/incognito mode.
+- You delete the `JobTracker.html` file and download a *new copy with a different name or in a different folder* (different file path = different storage "silo" in some browsers).
+- You use a completely different browser or device without exporting first.
+- A future major schema change makes old data unreadable (the app will start empty but will never auto-delete your old localStorage).
+
+**How to protect your data (do these regularly):**
+
+1. **Use "Save to file"** (in the dev bar or when available) — this writes a real `.json` file to your computer (Chrome/Edge File System Access). This is the most "real file" option.
+2. **Export JSON** frequently — the app will save `jobtracker-backup-....json` to your Downloads. Email it to yourself, save to Dropbox/Google Drive, or a USB stick.
+3. **For the single-file version**: Always download updates to the **exact same filename and folder** (e.g., always overwrite `C:\Users\You\Documents\JobTracker.html`). This keeps you on the same storage area.
+4. **Prefer the hosted browser link** (once GitHub Pages is enabled) — same origin forever, so data is consistent across updates with no file-management worries.
+5. The Import wizard **always exports your current data first** as a safety net before doing anything.
+
+**Bottom line**: Treat the browser localStorage as a convenient cache. Your real backup is the exported JSON or the file you saved with "Save to file". Export often and you'll be safe even if something goes wrong.
+
+---
+
+## For developers / technical users
+
+(The rest of this README is for people who want to run from source, modify the code, or contribute.)
+
 **App name:** JobTracker (confirmed)
 
 **Current status:** All phases complete (PR 1-8). Full features: Kanban DND, Companies (CRUD + contractor flag + search), Opportunities + rich Detail (tasks/contacts/meetings), Dashboard (pipeline + upcoming table w/ toggles), global search, keyboard shortcuts (n / k / esc), CSV/JSON/FS manual export+import wizard (auto-backup + preview + replace/merge), last-saved indicator, overdue highlights, FS API (manual open/save in Chrome/Edge + fallback), polished UI/toasts/empty states. Local only (LS primary + manual file/JSON). (Prior freezes/fixes + Part-time role + relaxed website + is_contractor included.)
@@ -73,6 +127,26 @@ Simply open `JobTracker.html` (or `dist/index.html`) by double-clicking the file
 PWA service worker registration is disabled in the single-file build (it would fail on `file://` anyway).
 
 This is the easiest "HTML doc" distribution format. Re-run `npm run build:html` after any code changes to update `JobTracker.html`.
+
+### For the repo owner: Enable one-click browser access for non-tech users (GitHub Pages)
+
+This makes the app usable by just clicking a link (no download at all):
+
+1. Go to your repo on GitHub: https://github.com/isaacchiles/job-tracker
+2. Click **Settings** (top right)
+3. In the left sidebar, click **Pages**
+4. Under "Build and deployment":
+   - Source: **Deploy from a branch**
+   - Branch: `main`
+   - Folder: `/ (root)`
+5. Click **Save**
+
+Wait 1-2 minutes. Your app will then be live at:
+- https://isaacchiles.github.io/job-tracker/JobTracker.html
+
+Update the link in the "For non-technical users" section above once it's working.
+
+You can also set a custom domain later if you want.
 
 ## Offering Updates & How Users Get Them
 

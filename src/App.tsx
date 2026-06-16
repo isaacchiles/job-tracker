@@ -216,7 +216,8 @@ function App() {
     <div className="min-h-screen bg-background text-foreground">
       <AppShell>
         {/* PR7+ data tools: export/import wizard, sample, CSV (refined from PR2) */}
-        <div className="mb-4 flex gap-2 text-xs bg-muted/50 p-2 rounded border">
+        <div className="mb-4 flex flex-wrap gap-2 text-xs bg-muted/50 p-2 rounded border">
+          <span className="font-medium text-amber-700">⚠️ Your job data is only in this browser. Export or "Save to file" regularly — updates won't delete it, but browser issues or file renames can!</span>
           <span className="font-mono text-muted-foreground">Data tools (PR7):</span>
           <button onClick={handleLoadSample} className="underline">Load sample data</button>
           <button onClick={handleExport} className="underline">Export JSON</button>
