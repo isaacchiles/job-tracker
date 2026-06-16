@@ -24,18 +24,7 @@ export const WORK_MODES: WorkMode[] = ['Remote', 'Hybrid', 'Onsite'];
 
 export const TITLE_BUMPS: TitleBump[] = ['Same', 'Medium', 'Large'];
 
-export const FUNDING_STAGES: FundingStage[] = [
-  'Unknown',
-  'Bootstrapped',
-  'Pre-seed',
-  'Seed',
-  'Series A',
-  'Series B',
-  'Series C',
-  'Series D+',
-  'Growth',
-  'Public',
-];
+export const FUNDING_STAGES: FundingStage[] = ['Public', 'Private', 'Startup'];
 
 export const MEETING_TYPES: MeetingType[] = ['Phone', 'Video', 'Onsite', 'Other'];
 

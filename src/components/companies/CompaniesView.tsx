@@ -109,7 +109,7 @@ export default function CompaniesView() {
       cell: (info: any) => info.getValue() || '—',
     }),
     columnHelper.accessor('funding_stage', {
-      header: 'Funding',
+      header: 'Type',
     }),
     columnHelper.accessor('headcount', {
       header: 'Headcount',

@@ -10,7 +10,7 @@ A personal application for job seekers to track companies, opportunities, contac
 **Design summary:** [docs/DESIGN_SUMMARY.md](docs/DESIGN_SUMMARY.md)  
 **Final review record:** [docs/REVIEW.md](docs/REVIEW.md)
 
-## Getting Started (PR 1 complete)
+## Getting Started
 
 ```bash
 cd /path/to/job-tracker
@@ -18,17 +18,50 @@ npm install          # only needed after fresh clone
 npm run dev
 ```
 
-Open http://localhost:5173
+Open http://localhost:5173 (or build with `npm run build` and serve `dist/`)
 
-- Sidebar navigation between Dashboard (pipeline + upcoming tasks w/ done toggles), Kanban (DND), Companies (table + form + contractor flag), Opportunities (list + full detail w/ tasks/contacts/meetings)
+- Sidebar navigation between Dashboard (pipeline + upcoming tasks w/ done toggles), Kanban (DND), Companies (table + form + contractor flag + type), Opportunities (list + full detail w/ tasks/contacts/meetings)
 - Dark mode toggle (bottom of sidebar)
 - Global search (header + / key), keyboard shortcuts (n=new opp, /=search, k=kanban, esc=close)
 - Data: auto LS + Export JSON/CSV, Import wizard (backup+preview+replace/merge), manual FS "Save/Open file" (Chrome/Edge)
 - Last saved time, overdue highlights, sample data, toasts, responsive
 - Fully local (primary localStorage; manual JSON/CSV/file for backup/restore)
 - Built with Vite + React 19 + Tailwind v4 + TypeScript + zustand + RHF/Zod + tanstack table + pangea dnd
+- Installable as PWA (see below)
 
 All PRs (1-8) complete per DESIGN.md.
+
+## Installation & Running as an App
+
+- **Dev mode** (recommended for updates): `npm run dev`
+- **Production build**: `npm run build`, then serve the `dist/` folder (e.g. `npx serve dist` or any static server). Works offline-ish.
+- **Install as app (PWA)**: 
+  - Run the app in Chrome/Edge/Safari (localhost or https).
+  - Browser will offer "Install JobTracker" or "Add to Home Screen" in the address bar or menu.
+  - Once installed, it runs like a native app (standalone window, offline capable via service worker).
+  - Updates: the PWA auto-checks for new versions when you run a fresh build/serve; it will update in background and prompt to reload.
+
+## Offering Updates & How Users Get Them
+
+Since this is a client-side local web app (no backend server):
+
+- **For developers / you (Isaac)**: Keep the repo in git. To offer updates:
+  1. Pull latest changes: `git pull`
+  2. Install any new deps: `npm install`
+  3. Rebuild if needed: `npm run build`
+  4. Users re-run `npm run dev` or re-serve `dist/`.
+  - Share via git (clone), zip of the folder, or host the built `dist/` on a simple static site (Netlify, GitHub Pages, Vercel free tier) for easy access.
+  - PWA makes "updates" feel seamless (auto SW update).
+
+- **For end users**: 
+  - If running from source: git pull + npm install + restart.
+  - If using installed PWA from a hosted build: refresh or it auto-updates.
+  - Data is always in browser localStorage (or chosen file via FS API). Export often for backup.
+  - No "app store" install; it's bring-your-own (browser-based).
+
+- Future options (not implemented yet): Tauri/Electron desktop wrapper for true native install + auto-updater (see DESIGN.md alternatives). Or self-hosted version with one-click scripts.
+
+See docs/DESIGN.md for architecture notes on persistence and distribution.
 
 ## Keyboard Shortcuts
 - `n` — New opportunity form (from anywhere)

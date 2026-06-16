@@ -58,7 +58,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
       name: '',
       website: '',
       industry: '',
-      funding_stage: 'Unknown',
+      funding_stage: 'Public',
       headcount: '',
       ai_native: false,
       is_contractor: false,
@@ -93,7 +93,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
         } as any);
       } else {
         reset({
-          name: '', website: '', industry: '', funding_stage: 'Unknown' as any, headcount: '' as any,
+          name: '', website: '', industry: '', funding_stage: 'Public' as any, headcount: '' as any,
           ai_native: false, is_contractor: false, hq_location: '', notes: '',
         } as any);
       }
@@ -166,7 +166,7 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Funding Stage</label>
+            <label className="block text-sm font-medium mb-1">Company Type</label>
             <select {...register('funding_stage')} className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm">
               {FUNDING_STAGES.map(stage => (
                 <option key={stage} value={stage}>{stage}</option>

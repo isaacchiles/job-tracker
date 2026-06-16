@@ -45,7 +45,7 @@ describe('utils', () => {
   });
 
   it('computeDeleteSummary calculates primary/via/contacts correctly', () => {
-    const company: Company = { id: 'c1', name: 'TestCo', website: null, industry: null, funding_stage: 'Unknown', headcount: null, ai_native: false, is_contractor: false, hq_location: null, notes: null, created_at: now.toISOString(), updated_at: now.toISOString(), contacts: [{ id: 'ct1', name: 'Contact', title: null, linkedin: null, notes: null, created_at: now.toISOString(), updated_at: now.toISOString() }] };
+    const company: Company = { id: 'c1', name: 'TestCo', website: null, industry: null, funding_stage: 'Public', headcount: null, ai_native: false, is_contractor: false, hq_location: null, notes: null, created_at: now.toISOString(), updated_at: now.toISOString(), contacts: [{ id: 'ct1', name: 'Contact', title: null, linkedin: null, notes: null, created_at: now.toISOString(), updated_at: now.toISOString() }] };
     const oppPrimary: Opportunity = { id: 'op1', company_id: 'c1', via_company_id: null, role_title: 'Role', role_type: 'Full-time', stage: 'Researching', job_url: null, location: null, source: null, priority: 'Medium', ote: null, equity: null, title_bump: 'Same', work_mode: 'Hybrid', why_interested: null, notes: null, applied_at: null, created_at: now.toISOString(), updated_at: now.toISOString(), tasks: [], meetings: [], contact_ids: ['ct1'] };
     const oppVia: Opportunity = { ...oppPrimary, id: 'op2', company_id: 'c2', via_company_id: 'c1' };
 

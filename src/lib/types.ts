@@ -15,17 +15,7 @@ export type WorkMode = 'Remote' | 'Hybrid' | 'Onsite';
 
 export type TitleBump = 'Same' | 'Medium' | 'Large';
 
-export type FundingStage =
-  | 'Unknown'
-  | 'Bootstrapped'
-  | 'Pre-seed'
-  | 'Seed'
-  | 'Series A'
-  | 'Series B'
-  | 'Series C'
-  | 'Series D+'
-  | 'Growth'
-  | 'Public';
+export type FundingStage = 'Public' | 'Private' | 'Startup';
 
 export type MeetingType = 'Phone' | 'Video' | 'Onsite' | 'Other';
 
@@ -149,7 +139,7 @@ export const PipelineStageSchema = z.enum(['Researching', 'Applied', 'Interviewi
 export const RoleTypeSchema = z.enum(['Full-time', 'Part-time', 'Contract', 'Internship', 'Other']);
 export const WorkModeSchema = z.enum(['Remote', 'Hybrid', 'Onsite']);
 export const TitleBumpSchema = z.enum(['Same', 'Medium', 'Large']);
-export const FundingStageSchema = z.enum(['Unknown', 'Bootstrapped', 'Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D+', 'Growth', 'Public']);
+export const FundingStageSchema = z.enum(['Public', 'Private', 'Startup']);
 export const MeetingTypeSchema = z.enum(['Phone', 'Video', 'Onsite', 'Other']);
 export const PrioritySchema = z.enum(['High', 'Medium', 'Low']);
 
