@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useAppStore, hydrateStore } from './lib/store'
-import { createSampleData } from './lib/persistence'
+import { createSampleData, saveToStorage } from './lib/persistence'
 import AppShell from './components/layout/AppShell'
 import DashboardView from './components/dashboard/DashboardView'
 import KanbanView from './components/kanban/KanbanView'
@@ -73,7 +73,37 @@ function App() {
     }
   }, []); // run once on mount
 
+  // Flush data to localStorage on sleep/hide or unload, to survive suspend/reload after long sleep
+  useEffect(() => {
+    const flush = () => {
+      try {
+        saveToStorage(useAppStore.getState().data);
+      } catch (e) {
+        console.error('Failed to flush data on hide/unload', e);
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        flush();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('beforeunload', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('beforeunload', flush);
+    };
+  }, []);
+
   const handleLoadSample = () => {
+    if (!window.confirm(
+      'Load sample/demo data?\n\n' +
+      'This will REPLACE ALL your current data with the demo sample data.\n\n' +
+      'A backup of your CURRENT data will be automatically downloaded first (check Downloads folder).\n\n' +
+      'Are you sure you want to proceed?'
+    )) {
+      return;
+    }
     const sample = createSampleData();
     // Always export current first (safety, per design)
     exportData();
@@ -256,7 +286,7 @@ function App() {
         <div className="mb-4 flex flex-wrap gap-2 text-xs bg-muted/50 p-2 rounded border">
           <span className="font-medium text-amber-700">⚠️ Your job data is only in this browser. Export or "Save to file" regularly — updates won't delete it, but browser issues or file renames can!</span>
           <span className="font-mono text-muted-foreground">Data tools (PR7):</span>
-          <button onClick={handleLoadSample} className="underline">Load sample data</button>
+          <button onClick={handleLoadSample} className="underline text-red-600 hover:text-red-700">Load sample data (replaces current!)</button>
           <button onClick={handleExport} className="underline">Export JSON</button>
           <button onClick={handleCSVExport} className="underline">Export CSV</button>
           <button onClick={handleSaveToFile} className="underline">Save to file</button>
