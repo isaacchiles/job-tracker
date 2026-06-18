@@ -156,8 +156,7 @@ function App() {
       return;
     }
     const sample = createSampleData();
-    // Always export current first (safety, per design)
-    exportData();
+    // importData() exports a safety backup of current data before replacing.
     const result = importData(sample, 'replace');
     toast.success(`Loaded sample data (replaced): ${result.opportunitiesAdded} opps, ${result.companiesAdded} companies`);
   };
@@ -228,8 +227,7 @@ function App() {
       const file = await fileHandle.getFile();
       const text = await file.text();
       const parsed = JSON.parse(text);
-      // Safety: export current
-      exportData();
+      // importData() exports a safety backup of current data before replacing.
       const result = importData(parsed, 'replace');
       // Also set this as the auto-save target for future changes
       fileHandleRef.current = fileHandle;
@@ -249,9 +247,8 @@ function App() {
   const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
 
   const openImportWizard = () => {
-    // Step 1: Safety - always export current first
-    exportData();
-    toast.info('Current data exported as backup (check downloads).');
+    // The safety backup is exported automatically when the import is confirmed
+    // (inside importData), so we don't export here — avoids a duplicate download.
     setImportStep('backup');
     setImportFileData(null);
     setImportPreview(null);
@@ -422,7 +419,7 @@ function App() {
           <div className="space-y-4 text-sm">
             {importStep === 'backup' && (
               <>
-                <p><strong>Safety step:</strong> Your current data was just auto-exported as a timestamped backup (check your Downloads folder).</p>
+                <p><strong>Safety step:</strong> A timestamped backup of your current data will be exported automatically before the import is applied (check your Downloads folder after you confirm).</p>
                 <p>Click below to select the JSON file you want to import.</p>
                 <button onClick={() => setImportStep('select')} className="mt-2 px-4 py-2 border rounded text-sm hover:bg-accent">Continue to file select</button>
               </>
