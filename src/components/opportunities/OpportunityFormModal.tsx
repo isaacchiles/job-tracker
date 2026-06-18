@@ -162,7 +162,13 @@ export function OpportunityFormModal({ isOpen, onClose, opportunity, prefillComp
   };
 
   const selectedCompanyId = watch('company_id');
-  const viaOptions = companies.filter(c => c.id !== selectedCompanyId && c.is_contractor);
+  const selectedViaId = watch('via_company_id');
+  // Show contractor/staffing firms, plus the currently-selected via company even
+  // if it isn't flagged as a contractor — otherwise editing an opp would drop a
+  // previously-set via reference (it wouldn't match any <option>) on save.
+  const viaOptions = companies.filter(
+    c => c.id !== selectedCompanyId && (c.is_contractor || c.id === selectedViaId)
+  );
 
   return (
     <Modal
