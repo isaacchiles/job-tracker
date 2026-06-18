@@ -253,10 +253,10 @@ export function findSimilarCompany(data: AppData, name: string, website: string 
   const lowerWebsite = website?.toLowerCase().trim();
   return data.companies.find(c => {
     const cName = c.name.toLowerCase().trim();
+    // Exact normalized name match.
     if (cName === lowerName) return true;
+    // Same website (normalized).
     if (lowerWebsite && c.website && c.website.toLowerCase().trim() === lowerWebsite) return true;
-    // fuzzy: name contains or vice versa
-    if (cName.includes(lowerName) || lowerName.includes(cName)) return true;
     return false;
   });
 }
