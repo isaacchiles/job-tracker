@@ -45,6 +45,9 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    // Relative base for the single-file build so it works when served from a
+    // project subpath (e.g. GitHub Pages: /job-tracker/) or opened via file://.
+    base: isSingleFile ? './' : '/',
     plugins,
     resolve: {
       alias: {

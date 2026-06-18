@@ -7,12 +7,28 @@ import type { PipelineStage } from '@/lib/types';
 
 export default function KanbanBoard() {
   const { data, moveOppStage } = useAppStore();
+  const [search, setSearch] = React.useState('');
 
-  // Group opps by stage
-  const oppsByStage: Record<PipelineStage, any[]> = STAGES.reduce((acc, stage) => {
-    acc[stage] = data.opportunities.filter(opp => opp.stage === stage);
-    return acc;
-  }, {} as Record<PipelineStage, any[]>);
+  // Group opps by stage (recompute only when opportunities change)
+  const oppsByStage: Record<PipelineStage, any[]> = React.useMemo(
+    () => STAGES.reduce((acc, stage) => {
+      acc[stage] = data.opportunities.filter(opp => opp.stage === stage);
+      return acc;
+    }, {} as Record<PipelineStage, any[]>),
+    [data.opportunities],
+  );
+
+  // Apply the search filter (recompute when grouping, search, or companies change)
+  const filteredOppsByStage = React.useMemo(() => {
+    const q = search.toLowerCase();
+    return STAGES.reduce((acc, stage) => {
+      acc[stage] = oppsByStage[stage].filter(opp =>
+        opp.role_title.toLowerCase().includes(q) ||
+        (data.companies.find(c => c.id === opp.company_id)?.name.toLowerCase().includes(q))
+      );
+      return acc;
+    }, {} as Record<PipelineStage, any[]>);
+  }, [oppsByStage, search, data.companies]);
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -25,16 +41,6 @@ export default function KanbanBoard() {
     // Call store - it handles applied_at side effect
     moveOppStage(draggableId, newStage);
   };
-
-  // Optional: simple search filter for board
-  const [search, setSearch] = React.useState('');
-  const filteredOppsByStage = STAGES.reduce((acc, stage) => {
-    acc[stage] = oppsByStage[stage].filter(opp => 
-      opp.role_title.toLowerCase().includes(search.toLowerCase()) ||
-      (data.companies.find(c => c.id === opp.company_id)?.name.toLowerCase().includes(search.toLowerCase()))
-    );
-    return acc;
-  }, {} as Record<PipelineStage, any[]>);
 
   return (
     <div>

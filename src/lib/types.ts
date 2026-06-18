@@ -266,7 +266,7 @@ export interface AppStore {
   getCompany(id: string | null): Company | undefined;
   getNextActionForOpp(oppOrId: Opportunity | string): Task | null;
   getOppsForCompany(companyId: string, options?: { includeVia?: boolean }): Opportunity[];
-  getAllOpenTasksSorted(): Array<{ task: Task; opp: Opportunity; company: Company }>;
-  getUpcomingTasks(limit?: number): Array<{ task: Task; opp: Opportunity; company: Company }>;
+  getAllOpenTasksSorted(): Array<{ task: Task; opp: Opportunity; company: Company | null }>;
+  getUpcomingTasks(limit?: number): Array<{ task: Task; opp: Opportunity; company: Company | null }>;
   getCompaniesWithStats(): Array<Company & { primaryOppCount: number; viaOppCount: number; totalOppCount: number; hasAINative?: boolean }>;
 }

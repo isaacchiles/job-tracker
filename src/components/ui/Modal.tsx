@@ -10,9 +10,6 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) {
-  if (isOpen) {
-    console.log('Modal rendering, isOpen:', isOpen, 'title:', title);
-  }
   if (!isOpen) return null;
 
   return createPortal(

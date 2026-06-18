@@ -36,7 +36,7 @@ export default function OpportunitiesView() {
     });
   }, [allOpps, search, stageFilter, priorityFilter, getCompany]);
 
-  const columns = [
+  const columns = React.useMemo(() => [
     columnHelper.accessor('role_title', {
       header: 'Role',
       cell: (info: any) => <span className="font-medium">{info.getValue()}</span>,
@@ -77,13 +77,15 @@ export default function OpportunitiesView() {
         );
       },
     }),
-  ];
+  ], [getCompany, deleteOpportunity]);
 
+  const coreRowModel = React.useMemo(() => getCoreRowModel(), []);
+  const filteredRowModel = React.useMemo(() => getFilteredRowModel(), []);
   const table = useReactTable({
     data: filtered,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    getCoreRowModel: coreRowModel,
+    getFilteredRowModel: filteredRowModel,
   });
 
   const openNew = () => {

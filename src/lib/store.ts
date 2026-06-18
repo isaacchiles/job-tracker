@@ -13,7 +13,6 @@ import {
   generateId,
   getNextActionForOpp,
   getOppsForCompany,
-  mergeData,
   findSimilarCompany,
   applyDeleteCompany,
 } from './utils';
@@ -434,26 +433,13 @@ export const useAppStore = create<AppStore>()(
       importData(incomingData, mode) {
         const current = get().data;
 
-        // Safety: always export current first (side effect for user)
+        // Safety: always export current first (this is the single owner of the
+        // pre-import backup; callers must NOT also export).
         doExport(current);
 
-        const result = doImport(current, incomingData, mode);
-
-        // Apply the result from doImport (which for merge already did internal merge in previous step, but we use the pure merge here for the data)
-        let finalData: AppData;
-        if (mode === 'replace') {
-          finalData = {
-            ... (incomingData as AppData),
-            version: 1,
-            meta: { ...((incomingData as AppData).meta || {}), last_exported_at: new Date().toISOString() },
-          };
-        } else {
-          const { result } = mergeData(current, incomingData as AppData);
-          finalData = {
-            ...result,
-            meta: { ...(result.meta || {}), last_exported_at: new Date().toISOString() },
-          };
-        }
+        // doImport validates, merges/replaces once, and returns both the stats
+        // and the resulting data. We consume that data directly — no second merge.
+        const { result, data: finalData } = doImport(current, incomingData, mode);
 
         set({ data: finalData });
         persistNow();
@@ -488,11 +474,13 @@ export const useAppStore = create<AppStore>()(
 
       getAllOpenTasksSorted() {
         const data = get().data;
-        const result: Array<{ task: Task; opp: Opportunity; company: Company }> = [];
+        const result: Array<{ task: Task; opp: Opportunity; company: Company | null }> = [];
 
         data.opportunities.forEach(opp => {
-          const company = data.companies.find(c => c.id === opp.company_id);
-          if (!company) return;
+          // company may be null: opportunities can exist before a company is
+          // assigned (or after their company was deleted). We still surface
+          // their open tasks rather than silently dropping them.
+          const company = data.companies.find(c => c.id === opp.company_id) || null;
 
           opp.tasks
             .filter(t => !t.done)
@@ -533,16 +521,8 @@ export const useAppStore = create<AppStore>()(
   })
 );
 
-// Auto-persist on any data change (in addition to action-level debouncing)
-useAppStore.subscribe(
-  (state) => state.data,
-  () => {
-    // The actions already call schedulePersist; this is belt-and-suspenders
-  },
-  { equalityFn: (a, b) => a === b } // reference equality for whole data blob
-);
-
-// Convenience: hydrate on import (called from main/App on mount if needed)
+// Convenience: re-read persisted state into the store on demand.
+// (Not called on mount — the store already initializes from storage at module load.)
 export function hydrateStore() {
   const store = useAppStore.getState();
   store.loadFromStorage();

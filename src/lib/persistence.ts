@@ -55,25 +55,35 @@ export function exportData(data: AppData): void {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  // Update meta
-  data.meta = { ...(data.meta || {}), last_exported_at: new Date().toISOString() };
+  // NOTE: this function is intentionally pure with respect to `data` — it only
+  // triggers the download. The store owns the `meta.last_exported_at` stamp via
+  // its `set(...)`, so we must not mutate the passed-in (live Zustand) object here.
 }
 
 /**
  * Core import logic. Public surface.
  * Always validate first (Zod). Never mutate on failure.
  */
-export function importData(current: AppData, incomingRaw: unknown, mode: 'replace' | 'merge'): ImportResult {
+export function importData(
+  current: AppData,
+  incomingRaw: unknown,
+  mode: 'replace' | 'merge',
+): { result: ImportResult; data: AppData } {
   let warnings: string[] = [];
   let versionMigrated = false;
 
-  // Validate incoming
+  // Validate incoming (throws on invalid; we never mutate on failure).
   let incoming: AppData;
   try {
     incoming = AppDataSchema.parse(incomingRaw);
   } catch (e: any) {
     throw new Error(`Invalid data file: ${e.message || 'Schema validation failed'}`);
   }
+
+  // Build the stored data from the *raw* (validated-but-not-stripped) object so
+  // that unknown / forward-compatible fields are preserved, matching prior
+  // behavior. `incoming` (the parsed copy) is used only for version checks.
+  const incomingForData = incomingRaw as AppData;
 
   // Version handling (additive)
   if (incoming.version !== 1) {
@@ -100,9 +110,9 @@ export function importData(current: AppData, incomingRaw: unknown, mode: 'replac
 
   if (mode === 'replace') {
     resultData = {
-      ...incoming,
+      ...incomingForData,
       version: 1,
-      meta: { ...(incoming.meta || {}), last_exported_at: new Date().toISOString() },
+      meta: { ...(incomingForData.meta || {}), last_exported_at: new Date().toISOString() },
     };
     // Count as added for replace
     stats.companiesAdded = resultData.companies.length;
@@ -115,21 +125,18 @@ export function importData(current: AppData, incomingRaw: unknown, mode: 'replac
     });
   } else {
     // Merge
-    const { result, warnings: mergeWarnings } = mergeData(current, incoming);
+    const { result, warnings: mergeWarnings, stats: mergeStats } = mergeData(current, incomingForData);
     resultData = {
       ...result,
       meta: { ...(result.meta || {}), last_exported_at: new Date().toISOString() },
     };
     warnings = [...warnings, ...mergeWarnings];
 
-    // Compute rough stats (simplified - real diff would be more precise but sufficient)
-    const beforeCompCount = current.companies.length;
-    const beforeOppCount = current.opportunities.length;
-
-    stats.companiesAdded = Math.max(0, resultData.companies.length - beforeCompCount);
-    stats.companiesUpdated = Math.min(beforeCompCount, resultData.companies.length) - (resultData.companies.length - stats.companiesAdded); // rough
-    // For demo purposes use added/updated heuristics
-    stats.opportunitiesAdded = Math.max(0, resultData.opportunities.length - beforeOppCount);
+    // Accurate added/updated counts come straight from the merge.
+    stats.companiesAdded = mergeStats.companiesAdded;
+    stats.companiesUpdated = mergeStats.companiesUpdated;
+    stats.opportunitiesAdded = mergeStats.opportunitiesAdded;
+    stats.opportunitiesUpdated = mergeStats.opportunitiesUpdated;
   }
 
   // Always bump updated meta
@@ -152,7 +159,7 @@ export function importData(current: AppData, incomingRaw: unknown, mode: 'replac
     warnings,
   };
 
-  return importResult;
+  return { result: importResult, data: resultData };
 }
 
 /**

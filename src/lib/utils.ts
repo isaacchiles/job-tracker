@@ -8,10 +8,30 @@ import type {
 } from './types';
 
 /**
- * Generate UUID (browser crypto)
+ * Generate a v4 UUID.
+ *
+ * `crypto.randomUUID()` requires a secure context, and `file://` (how the
+ * single-file JobTracker.html is opened) is NOT secure in some browsers, where
+ * `crypto.randomUUID` can be undefined. Feature-detect and fall back to a
+ * getRandomValues-based v4 UUID (or Math.random as a last resort).
  */
 export function generateId(): string {
-  return crypto.randomUUID();
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  const bytes = new Uint8Array(16);
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  // RFC 4122 §4.4: set version (4) and variant (10xx) bits.
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+  const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 /**
@@ -86,14 +106,16 @@ export function computeDeleteSummary(data: AppData, companyId: string): DeleteCo
 
   const affectedOppIds = [...primaryOpps.map(o => o.id), ...viaOpps.map(o => o.id)];
 
-  // Count how many contact links would be cleaned in remaining opps
+  // Count contact links that will be cleaned from SURVIVING opps. Primary opps
+  // are deleted outright (their links go with them), so they don't count — but
+  // via-opps survive and DO get their links to the deleted company's contacts
+  // cleaned, so they must be counted here.
   let cleanedContactLinks = 0;
   data.opportunities.forEach(opp => {
-    if (!affectedOppIds.includes(opp.id)) {
-      const before = opp.contact_ids.length;
-      const after = opp.contact_ids.filter(id => !contactIdsToRemove.has(id)).length;
-      cleanedContactLinks += (before - after);
-    }
+    if (opp.company_id === companyId) return; // primary opp is removed entirely
+    const before = opp.contact_ids.length;
+    const after = opp.contact_ids.filter(id => !contactIdsToRemove.has(id)).length;
+    cleanedContactLinks += (before - after);
   });
 
   return {
@@ -116,13 +138,24 @@ export function applyDeleteCompany(data: AppData, companyId: string): { newData:
 
   let newOpps = data.opportunities.filter(o => o.company_id !== companyId); // remove primary
   newOpps = newOpps.map(opp => {
-    if (opp.via_company_id === companyId) {
-      return { ...opp, via_company_id: null, updated_at: new Date().toISOString() };
+    // A surviving opp may need BOTH its via reference nulled AND its contact
+    // links cleaned (the previous code returned early on via, leaving dangling
+    // contact_ids when an opp was via the deleted company).
+    let changed = false;
+
+    let newVia = opp.via_company_id;
+    if (newVia === companyId) {
+      newVia = null;
+      changed = true;
     }
-    // clean contact links
+
     const newContactIds = opp.contact_ids.filter(id => !contactIdsToRemove.has(id));
     if (newContactIds.length !== opp.contact_ids.length) {
-      return { ...opp, contact_ids: newContactIds, updated_at: new Date().toISOString() };
+      changed = true;
+    }
+
+    if (changed) {
+      return { ...opp, via_company_id: newVia, contact_ids: newContactIds, updated_at: new Date().toISOString() };
     }
     return opp;
   });
@@ -142,8 +175,17 @@ export function applyDeleteCompany(data: AppData, companyId: string): { newData:
  * Merge logic (private, used by importData)
  * See exact semantics in DESIGN.md
  */
-export function mergeData(current: AppData, incoming: AppData): { result: AppData; warnings: string[] } {
+export function mergeData(current: AppData, incoming: AppData): {
+  result: AppData;
+  warnings: string[];
+  stats: { companiesAdded: number; companiesUpdated: number; opportunitiesAdded: number; opportunitiesUpdated: number };
+} {
   const warnings: string[] = [];
+
+  let companiesAdded = 0;
+  let companiesUpdated = 0;
+  let opportunitiesAdded = 0;
+  let opportunitiesUpdated = 0;
 
   // Companies merge by id
   const companyMap = new Map(current.companies.map(c => [c.id, c]));
@@ -153,10 +195,12 @@ export function mergeData(current: AppData, incoming: AppData): { result: AppDat
     const existing = companyMap.get(inc.id);
     if (!existing) {
       mergedCompanies.push(inc);
+      companiesAdded++;
     } else if (inc.updated_at > existing.updated_at) {
       // replace with incoming (including its contacts)
       const idx = mergedCompanies.findIndex(c => c.id === inc.id);
       mergedCompanies[idx] = inc;
+      companiesUpdated++;
       warnings.push(`Company ${inc.name} updated from incoming (later updated_at)`);
     }
   }
@@ -169,9 +213,11 @@ export function mergeData(current: AppData, incoming: AppData): { result: AppDat
     const existing = oppMap.get(inc.id);
     if (!existing) {
       mergedOpps.push(inc);
+      opportunitiesAdded++;
     } else if (inc.updated_at > existing.updated_at) {
       const idx = mergedOpps.findIndex(o => o.id === inc.id);
       mergedOpps[idx] = inc;
+      opportunitiesUpdated++;
       warnings.push(`Opportunity ${inc.role_title} updated from incoming`);
     }
   }
@@ -222,7 +268,11 @@ export function mergeData(current: AppData, incoming: AppData): { result: AppDat
     },
   };
 
-  return { result, warnings };
+  return {
+    result,
+    warnings,
+    stats: { companiesAdded, companiesUpdated, opportunitiesAdded, opportunitiesUpdated },
+  };
 }
 
 /**
@@ -233,10 +283,10 @@ export function findSimilarCompany(data: AppData, name: string, website: string 
   const lowerWebsite = website?.toLowerCase().trim();
   return data.companies.find(c => {
     const cName = c.name.toLowerCase().trim();
+    // Exact normalized name match.
     if (cName === lowerName) return true;
+    // Same website (normalized).
     if (lowerWebsite && c.website && c.website.toLowerCase().trim() === lowerWebsite) return true;
-    // fuzzy: name contains or vice versa
-    if (cName.includes(lowerName) || lowerName.includes(cName)) return true;
     return false;
   });
 }
