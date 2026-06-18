@@ -29,11 +29,7 @@ export function useKeyboardShortcuts() {
         window.location.hash = '#kanban'; // simple
         // Better: use router but for now
       }
-      if (e.key === 'Escape') {
-        // Let modals handle; global close last opp detail if open
-        const closeDetail = (window as any).closeOpportunityDetail;
-        if (closeDetail) closeDetail();
-      }
+      // Escape is handled by each Modal itself (close-on-Escape).
     };
 
     window.addEventListener('keydown', handler);
