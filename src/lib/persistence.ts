@@ -125,21 +125,18 @@ export function importData(
     });
   } else {
     // Merge
-    const { result, warnings: mergeWarnings } = mergeData(current, incomingForData);
+    const { result, warnings: mergeWarnings, stats: mergeStats } = mergeData(current, incomingForData);
     resultData = {
       ...result,
       meta: { ...(result.meta || {}), last_exported_at: new Date().toISOString() },
     };
     warnings = [...warnings, ...mergeWarnings];
 
-    // Compute rough stats (simplified - real diff would be more precise but sufficient)
-    const beforeCompCount = current.companies.length;
-    const beforeOppCount = current.opportunities.length;
-
-    stats.companiesAdded = Math.max(0, resultData.companies.length - beforeCompCount);
-    stats.companiesUpdated = Math.min(beforeCompCount, resultData.companies.length) - (resultData.companies.length - stats.companiesAdded); // rough
-    // For demo purposes use added/updated heuristics
-    stats.opportunitiesAdded = Math.max(0, resultData.opportunities.length - beforeOppCount);
+    // Accurate added/updated counts come straight from the merge.
+    stats.companiesAdded = mergeStats.companiesAdded;
+    stats.companiesUpdated = mergeStats.companiesUpdated;
+    stats.opportunitiesAdded = mergeStats.opportunitiesAdded;
+    stats.opportunitiesUpdated = mergeStats.opportunitiesUpdated;
   }
 
   // Always bump updated meta

@@ -175,8 +175,17 @@ export function applyDeleteCompany(data: AppData, companyId: string): { newData:
  * Merge logic (private, used by importData)
  * See exact semantics in DESIGN.md
  */
-export function mergeData(current: AppData, incoming: AppData): { result: AppData; warnings: string[] } {
+export function mergeData(current: AppData, incoming: AppData): {
+  result: AppData;
+  warnings: string[];
+  stats: { companiesAdded: number; companiesUpdated: number; opportunitiesAdded: number; opportunitiesUpdated: number };
+} {
   const warnings: string[] = [];
+
+  let companiesAdded = 0;
+  let companiesUpdated = 0;
+  let opportunitiesAdded = 0;
+  let opportunitiesUpdated = 0;
 
   // Companies merge by id
   const companyMap = new Map(current.companies.map(c => [c.id, c]));
@@ -186,10 +195,12 @@ export function mergeData(current: AppData, incoming: AppData): { result: AppDat
     const existing = companyMap.get(inc.id);
     if (!existing) {
       mergedCompanies.push(inc);
+      companiesAdded++;
     } else if (inc.updated_at > existing.updated_at) {
       // replace with incoming (including its contacts)
       const idx = mergedCompanies.findIndex(c => c.id === inc.id);
       mergedCompanies[idx] = inc;
+      companiesUpdated++;
       warnings.push(`Company ${inc.name} updated from incoming (later updated_at)`);
     }
   }
@@ -202,9 +213,11 @@ export function mergeData(current: AppData, incoming: AppData): { result: AppDat
     const existing = oppMap.get(inc.id);
     if (!existing) {
       mergedOpps.push(inc);
+      opportunitiesAdded++;
     } else if (inc.updated_at > existing.updated_at) {
       const idx = mergedOpps.findIndex(o => o.id === inc.id);
       mergedOpps[idx] = inc;
+      opportunitiesUpdated++;
       warnings.push(`Opportunity ${inc.role_title} updated from incoming`);
     }
   }
@@ -255,7 +268,11 @@ export function mergeData(current: AppData, incoming: AppData): { result: AppDat
     },
   };
 
-  return { result, warnings };
+  return {
+    result,
+    warnings,
+    stats: { companiesAdded, companiesUpdated, opportunitiesAdded, opportunitiesUpdated },
+  };
 }
 
 /**

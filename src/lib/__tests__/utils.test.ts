@@ -106,6 +106,25 @@ describe('mergeData', () => {
     expect(warnings.some(w => w.toLowerCase().includes('dangling'))).toBe(true);
   });
 
+  it('reports accurate added/updated stats', () => {
+    const current = makeData({
+      companies: [makeCompany({ id: 'c1', name: 'Keep', updated_at: '2026-03-01T00:00:00.000Z' })],
+      opportunities: [makeOpp({ id: 'o1', updated_at: '2026-03-01T00:00:00.000Z' })],
+    });
+    const incoming = makeData({
+      companies: [
+        makeCompany({ id: 'c1', name: 'Updated', updated_at: '2026-06-01T00:00:00.000Z' }), // updated (newer)
+        makeCompany({ id: 'c2', name: 'Brand New' }),                                        // added
+      ],
+      opportunities: [
+        makeOpp({ id: 'o1', updated_at: '2025-01-01T00:00:00.000Z' }), // older -> NOT counted
+        makeOpp({ id: 'o2' }),                                          // added
+      ],
+    });
+    const { stats } = mergeData(current, incoming);
+    expect(stats).toEqual({ companiesAdded: 1, companiesUpdated: 1, opportunitiesAdded: 1, opportunitiesUpdated: 0 });
+  });
+
   it('keeps contact_ids that resolve to a real contact', () => {
     const company = makeCompany({ id: 'c1', contacts: [makeContact({ id: 'ct1' })] });
     const { result } = mergeData(
