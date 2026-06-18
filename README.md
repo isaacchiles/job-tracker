@@ -145,3 +145,9 @@ The full specification, data model, and architecture decisions live in:
 - **Opportunity** — belongs to a company (and an optional *via* company); role title/type, pipeline stage, work mode, priority, OTE, equity, title bump, source, job URL, location, why-interested, notes, applied date; embedded **tasks** (title, due, done) and **meetings** (date, type, attendees, notes, outcome); linked contact IDs.
 
 All records carry `id`, `created_at`, and `updated_at`.
+
+---
+
+## Author
+
+Created by **Isaac Chiles** — [isaac.chiles@gmail.com](mailto:isaac.chiles@gmail.com)

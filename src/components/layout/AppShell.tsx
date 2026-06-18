@@ -67,16 +67,22 @@ export default function AppShell({ children }: AppShellProps) {
           })}
         </nav>
 
-        <div className="p-3 border-t mt-auto text-xs text-muted-foreground flex items-center justify-between">
-          <div>Local only • No server</div>
-          <button
-            onClick={toggleDark}
-            className="p-1.5 rounded hover:bg-accent"
-            title="Toggle theme"
-            aria-label="Toggle dark mode"
-          >
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
+        <div className="p-3 border-t mt-auto space-y-1.5">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div>Local only • No server</div>
+            <button
+              onClick={toggleDark}
+              className="p-1.5 rounded hover:bg-accent"
+              title="Toggle theme"
+              aria-label="Toggle dark mode"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+          </div>
+          <div className="text-[10px] text-muted-foreground">
+            Created by{' '}
+            <a href="mailto:isaac.chiles@gmail.com" className="underline hover:text-foreground">Isaac Chiles</a>
+          </div>
         </div>
       </div>
 
