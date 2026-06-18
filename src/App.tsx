@@ -167,13 +167,30 @@ function App() {
   };
 
   const handleCSVExport = () => {
+    // Serialize one CSV cell: stringify, guard against spreadsheet formula
+    // injection (leading = + - @ tab/CR), and quote/escape when needed.
+    const cell = (val: unknown): string => {
+      if (val == null) return '';
+      let s = String(val);
+      if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+      if (/[",\n\r]/.test(s)) s = `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    const row = (cells: unknown[]) => cells.map(cell).join(',');
+
     const csvLines: string[] = [];
     csvLines.push('section,id,name,website,industry,funding_stage,headcount,ai_native,hq_location,notes,role_title,role_type,stage,priority,ote,equity,location,source,company_id,via_company_id');
     data.companies.forEach((c: any) => {
-      csvLines.push(`company,${c.id},${JSON.stringify(c.name || '')},${c.website || ''},${c.industry || ''},${c.funding_stage},${c.headcount ?? ''},${c.ai_native},${c.hq_location || ''},${JSON.stringify(c.notes || '')},,,,,,,,${c.id},`);
+      csvLines.push(row([
+        'company', c.id, c.name, c.website, c.industry, c.funding_stage, c.headcount, c.ai_native, c.hq_location, c.notes,
+        '', '', '', '', '', '', '', '', c.id, '',
+      ]));
     });
     data.opportunities.forEach((o: any) => {
-      csvLines.push(`opportunity,${o.id},,,,,,,,${JSON.stringify(o.role_title || '')},${o.role_type},${o.stage},${o.priority},${o.ote ?? ''},${o.equity || ''},${o.location || ''},${o.source || ''},${o.company_id || ''},${o.via_company_id || ''}`);
+      csvLines.push(row([
+        'opportunity', o.id, '', '', '', '', '', '', '', '',
+        o.role_title, o.role_type, o.stage, o.priority, o.ote, o.equity, o.location, o.source, o.company_id, o.via_company_id,
+      ]));
     });
     const csv = csvLines.join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
