@@ -55,7 +55,9 @@ describe('utils', () => {
     expect(summary.removedPrimaryOpps).toBe(1);
     expect(summary.nulledViaOpps).toBe(1);
     expect(summary.deletedContacts).toBe(1);
-    expect(summary.cleanedContactLinks).toBe(0); // contact link was on removed primary, not "cleaned" from remaining opps
+    // oppVia (spread from oppPrimary) also carries ct1 and survives the delete,
+    // so its dangling link to the deleted company's contact must be cleaned.
+    expect(summary.cleanedContactLinks).toBe(1);
   });
 });
 
@@ -127,5 +129,19 @@ describe('applyDeleteCompany', () => {
     expect(newData.companies.map(c => c.id)).toEqual(['c2']);
     expect(newData.opportunities.map(o => o.id)).toEqual(['via']);
     expect(newData.opportunities.find(o => o.id === 'via')!.via_company_id).toBeNull();
+  });
+
+  it('cleans dangling contact links on a via-opp (not just nulling the via ref)', () => {
+    const company = makeCompany({ id: 'c1', contacts: [makeContact({ id: 'ct1' })] });
+    const data = makeData({
+      companies: [company, makeCompany({ id: 'c2' })],
+      // opp is VIA the deleted company AND linked to its contact ct1
+      opportunities: [makeOpp({ id: 'viaOpp', company_id: 'c2', via_company_id: 'c1', contact_ids: ['ct1'] })],
+    });
+    const { newData, summary } = applyDeleteCompany(data, 'c1');
+    const viaOpp = newData.opportunities.find(o => o.id === 'viaOpp')!;
+    expect(viaOpp.via_company_id).toBeNull();
+    expect(viaOpp.contact_ids).toEqual([]); // dangling link removed
+    expect(summary.cleanedContactLinks).toBe(1);
   });
 });

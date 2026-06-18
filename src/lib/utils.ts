@@ -106,14 +106,16 @@ export function computeDeleteSummary(data: AppData, companyId: string): DeleteCo
 
   const affectedOppIds = [...primaryOpps.map(o => o.id), ...viaOpps.map(o => o.id)];
 
-  // Count how many contact links would be cleaned in remaining opps
+  // Count contact links that will be cleaned from SURVIVING opps. Primary opps
+  // are deleted outright (their links go with them), so they don't count — but
+  // via-opps survive and DO get their links to the deleted company's contacts
+  // cleaned, so they must be counted here.
   let cleanedContactLinks = 0;
   data.opportunities.forEach(opp => {
-    if (!affectedOppIds.includes(opp.id)) {
-      const before = opp.contact_ids.length;
-      const after = opp.contact_ids.filter(id => !contactIdsToRemove.has(id)).length;
-      cleanedContactLinks += (before - after);
-    }
+    if (opp.company_id === companyId) return; // primary opp is removed entirely
+    const before = opp.contact_ids.length;
+    const after = opp.contact_ids.filter(id => !contactIdsToRemove.has(id)).length;
+    cleanedContactLinks += (before - after);
   });
 
   return {
@@ -136,13 +138,24 @@ export function applyDeleteCompany(data: AppData, companyId: string): { newData:
 
   let newOpps = data.opportunities.filter(o => o.company_id !== companyId); // remove primary
   newOpps = newOpps.map(opp => {
-    if (opp.via_company_id === companyId) {
-      return { ...opp, via_company_id: null, updated_at: new Date().toISOString() };
+    // A surviving opp may need BOTH its via reference nulled AND its contact
+    // links cleaned (the previous code returned early on via, leaving dangling
+    // contact_ids when an opp was via the deleted company).
+    let changed = false;
+
+    let newVia = opp.via_company_id;
+    if (newVia === companyId) {
+      newVia = null;
+      changed = true;
     }
-    // clean contact links
+
     const newContactIds = opp.contact_ids.filter(id => !contactIdsToRemove.has(id));
     if (newContactIds.length !== opp.contact_ids.length) {
-      return { ...opp, contact_ids: newContactIds, updated_at: new Date().toISOString() };
+      changed = true;
+    }
+
+    if (changed) {
+      return { ...opp, via_company_id: newVia, contact_ids: newContactIds, updated_at: new Date().toISOString() };
     }
     return opp;
   });
