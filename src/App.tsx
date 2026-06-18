@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
-import { useAppStore, hydrateStore } from './lib/store'
+import { useAppStore } from './lib/store'
 import { createSampleData, saveToStorage, saveFileHandle, loadFileHandle, clearFileHandle } from './lib/persistence'
 import AppShell from './components/layout/AppShell'
 import DashboardView from './components/dashboard/DashboardView'
@@ -16,10 +16,10 @@ import { toast } from 'sonner'
 function App() {
   useKeyboardShortcuts();
 
-  // Hydrate store from localStorage on first mount (PR2 foundation)
+  // The store already initializes from localStorage at module-load time, so no
+  // re-hydration is needed here (a second hydrate could clobber in-flight edits).
+  // We still expose the store for console debugging and the top-bar global search.
   useEffect(() => {
-    hydrateStore();
-    // Expose for console debugging / manual testing of PR2 surface
     (window as any).useAppStore = useAppStore;
     (window as any).createSampleData = createSampleData;
   }, []);
