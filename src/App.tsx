@@ -1,8 +1,8 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useAppStore, hydrateStore } from './lib/store'
-import { createSampleData, saveToStorage } from './lib/persistence'
+import { createSampleData, saveToStorage, saveFileHandle, loadFileHandle, clearFileHandle } from './lib/persistence'
 import AppShell from './components/layout/AppShell'
 import DashboardView from './components/dashboard/DashboardView'
 import KanbanView from './components/kanban/KanbanView'
@@ -28,11 +28,29 @@ function App() {
   const { exportData, importData, data } = useAppStore();
 
   const [lastSaved, setLastSaved] = useState('just now');
+  const [autoSaveFileName, setAutoSaveFileName] = useState<string | null>(null);
+  const fileHandleRef = useRef<any>(null); // FileSystemFileHandle
 
   useEffect(() => {
     const unsub = useAppStore.subscribe(
       (s) => s.data,
-      () => setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+      () => {
+        setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        // Auto-flush to file handle on data change (debounced by nature of updates + hidden flush)
+        if (fileHandleRef.current) {
+          // fire and forget, errors logged in flush
+          (async () => {
+            try {
+              const current = useAppStore.getState().data;
+              const writable = await fileHandleRef.current.createWritable();
+              await writable.write(JSON.stringify(current, null, 2));
+              await writable.close();
+            } catch (e) {
+              // permission or other error; will retry on next flush
+            }
+          })();
+        }
+      }
     );
     return unsub;
   }, []);
@@ -74,12 +92,25 @@ function App() {
   }, []); // run once on mount
 
   // Flush data to localStorage on sleep/hide or unload, to survive suspend/reload after long sleep
+  // Also attempt auto-write to chosen file handle if present.
   useEffect(() => {
-    const flush = () => {
+    const flush = async () => {
+      const currentData = useAppStore.getState().data;
       try {
-        saveToStorage(useAppStore.getState().data);
+        saveToStorage(currentData);
       } catch (e) {
         console.error('Failed to flush data on hide/unload', e);
+      }
+      // Auto-write to file if we have a handle (best effort; may need re-permission)
+      if (fileHandleRef.current) {
+        try {
+          const writable = await fileHandleRef.current.createWritable();
+          await writable.write(JSON.stringify(currentData, null, 2));
+          await writable.close();
+        } catch (e) {
+          console.warn('Auto write to chosen file failed (permission?)', e);
+          // Don't clear handle; user can re-save to grant perm again
+        }
       }
     };
     const onVisibility = () => {
@@ -89,6 +120,26 @@ function App() {
     };
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('beforeunload', flush);
+
+    // On mount, try to restore previous file handle for auto-save
+    (async () => {
+      try {
+        const restored = await loadFileHandle();
+        if (restored) {
+          // Request permission (may prompt or fail silently without gesture)
+          const h = restored as any;
+          const perm = await h.queryPermission?.({ mode: 'readwrite' }) || 'prompt';
+          if (perm === 'prompt' || perm === 'granted') {
+            await h.requestPermission?.({ mode: 'readwrite' });
+          }
+          fileHandleRef.current = restored;
+          setAutoSaveFileName((restored as any).name || 'chosen file');
+        }
+      } catch (e) {
+        // ignore, handle not available or no perm
+      }
+    })();
+
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('beforeunload', flush);
@@ -154,7 +205,10 @@ function App() {
       const writable = await handle.createWritable();
       await writable.write(JSON.stringify(currentData, null, 2));
       await writable.close();
-      toast.success('Saved current data to chosen file.');
+      fileHandleRef.current = handle;
+      setAutoSaveFileName(handle.name || 'chosen file');
+      await saveFileHandle(handle); // persist handle in IDB for future sessions
+      toast.success(`Saved current data to chosen file. Future changes will auto-save to it (on save/hide).`);
     } catch (err: any) {
       if (err.name !== 'AbortError') toast.error('Save to file failed: ' + err.message);
     }
@@ -177,7 +231,11 @@ function App() {
       // Safety: export current
       exportData();
       const result = importData(parsed, 'replace');
-      toast.success(`Opened file & replaced data: ${result.companiesAdded || 0} companies, ${result.opportunitiesAdded || 0} opps.`);
+      // Also set this as the auto-save target for future changes
+      fileHandleRef.current = fileHandle;
+      setAutoSaveFileName(fileHandle.name || 'chosen file');
+      await saveFileHandle(fileHandle);
+      toast.success(`Opened file & replaced data: ${result.companiesAdded || 0} companies, ${result.opportunitiesAdded || 0} opps. Future changes will auto-save to it.`);
     } catch (err: any) {
       if (err.name !== 'AbortError') toast.error('Open file failed: ' + err.message);
     }
@@ -293,6 +351,17 @@ function App() {
           <button onClick={handleOpenFile} className="underline">Open file</button>
           <button onClick={openImportWizard} className="underline">Import (wizard)</button>
           <span className="ml-auto text-muted-foreground">Companies: {data.companies.length} • Opps: {data.opportunities.length} • Saved: {lastSaved} • Backup: {lastBackupAge}</span>
+          {autoSaveFileName && (
+            <>
+              <span className="text-green-700">Auto-save: {autoSaveFileName}</span>
+              <button onClick={async () => {
+                fileHandleRef.current = null;
+                setAutoSaveFileName(null);
+                await clearFileHandle();
+                toast.info('Stopped auto-saving to file.');
+              }} className="underline text-xs">stop</button>
+            </>
+          )}
           <input
             type="text"
             placeholder="Global search (press / )..."

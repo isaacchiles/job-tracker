@@ -331,3 +331,64 @@ export function downloadJSON(filename: string, data: any) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+// --- File handle persistence via IndexedDB (for auto-save to user's chosen file) ---
+// This makes "Save to file" more reliable across sessions/reloads/sleep.
+// Handles are stored per-origin (works for http and file:// in supporting browsers like Chrome/Edge).
+
+const IDB_DB_NAME = 'jobtracker';
+const IDB_STORE_NAME = 'fileHandles';
+const HANDLE_KEY = 'currentBackupFile';
+
+let idbPromise: Promise<IDBDatabase> | null = null;
+
+function getIDB(): Promise<IDBDatabase> {
+  if (!idbPromise) {
+    idbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(IDB_DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
+          db.createObjectStore(IDB_STORE_NAME);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  return idbPromise;
+}
+
+export async function saveFileHandle(handle: FileSystemFileHandle | null): Promise<void> {
+  if (!handle) return;
+  const db = await getIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
+    const store = tx.objectStore(IDB_STORE_NAME);
+    const req = store.put(handle, HANDLE_KEY);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function loadFileHandle(): Promise<FileSystemFileHandle | null> {
+  const db = await getIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE_NAME, 'readonly');
+    const store = tx.objectStore(IDB_STORE_NAME);
+    const req = store.get(HANDLE_KEY);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function clearFileHandle(): Promise<void> {
+  const db = await getIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
+    const store = tx.objectStore(IDB_STORE_NAME);
+    const req = store.delete(HANDLE_KEY);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
