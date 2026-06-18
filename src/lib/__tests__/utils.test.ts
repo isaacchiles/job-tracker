@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isOverdue, getNextActionForOpp, computeDeleteSummary, formatHeadcount } from '../utils';
-import type { AppData, Company, Opportunity, Task } from '../types';
+import { isOverdue, getNextActionForOpp, computeDeleteSummary, formatHeadcount, mergeData, applyDeleteCompany } from '../utils';
+import type { AppData, Company, Contact, Opportunity, Task } from '../types';
 
 describe('utils', () => {
   const now = new Date();
@@ -56,5 +56,76 @@ describe('utils', () => {
     expect(summary.nulledViaOpps).toBe(1);
     expect(summary.deletedContacts).toBe(1);
     expect(summary.cleanedContactLinks).toBe(0); // contact link was on removed primary, not "cleaned" from remaining opps
+  });
+});
+
+// --- Builders for merge/delete tests ---
+const T0 = '2026-01-01T00:00:00.000Z';
+function makeContact(over: Partial<Contact> = {}): Contact {
+  return { id: 'ct', name: 'C', title: null, linkedin: null, notes: null, created_at: T0, updated_at: T0, ...over };
+}
+function makeCompany(over: Partial<Company> = {}): Company {
+  return { id: 'c', name: 'Co', website: null, industry: null, funding_stage: 'Public', headcount: null, ai_native: false, is_contractor: false, hq_location: null, notes: null, created_at: T0, updated_at: T0, contacts: [], ...over };
+}
+function makeOpp(over: Partial<Opportunity> = {}): Opportunity {
+  return { id: 'o', company_id: null, via_company_id: null, role_title: 'R', role_type: 'Full-time', stage: 'Researching', job_url: null, location: null, source: null, priority: 'Medium', ote: null, equity: null, title_bump: 'Same', work_mode: 'Hybrid', why_interested: null, notes: null, applied_at: null, created_at: T0, updated_at: T0, tasks: [], meetings: [], contact_ids: [], ...over };
+}
+function makeData(over: Partial<AppData> = {}): AppData {
+  return { version: 1, companies: [], opportunities: [], meta: {}, ...over };
+}
+
+describe('mergeData', () => {
+  it('adds companies/opps that do not exist in current', () => {
+    const { result } = mergeData(
+      makeData(),
+      makeData({ companies: [makeCompany({ id: 'c1', name: 'New' })], opportunities: [makeOpp({ id: 'o1' })] }),
+    );
+    expect(result.companies.map(c => c.id)).toEqual(['c1']);
+    expect(result.opportunities.map(o => o.id)).toEqual(['o1']);
+  });
+
+  it('replaces an existing company only when incoming.updated_at is newer', () => {
+    const current = makeData({ companies: [makeCompany({ id: 'c1', name: 'Old', updated_at: '2026-01-01T00:00:00.000Z' })] });
+    const newer = mergeData(current, makeData({ companies: [makeCompany({ id: 'c1', name: 'New', updated_at: '2026-06-01T00:00:00.000Z' })] }));
+    expect(newer.result.companies.find(c => c.id === 'c1')!.name).toBe('New');
+
+    const older = mergeData(current, makeData({ companies: [makeCompany({ id: 'c1', name: 'Stale', updated_at: '2025-01-01T00:00:00.000Z' })] }));
+    expect(older.result.companies.find(c => c.id === 'c1')!.name).toBe('Old');
+  });
+
+  it('nulls a dangling via_company_id after merge', () => {
+    const { result } = mergeData(makeData(), makeData({ opportunities: [makeOpp({ id: 'o1', via_company_id: 'missing' })] }));
+    expect(result.opportunities[0].via_company_id).toBeNull();
+  });
+
+  it('cleans dangling contact_ids and warns', () => {
+    const { result, warnings } = mergeData(makeData(), makeData({ opportunities: [makeOpp({ id: 'o1', contact_ids: ['ghost'] })] }));
+    expect(result.opportunities[0].contact_ids).toEqual([]);
+    expect(warnings.some(w => w.toLowerCase().includes('dangling'))).toBe(true);
+  });
+
+  it('keeps contact_ids that resolve to a real contact', () => {
+    const company = makeCompany({ id: 'c1', contacts: [makeContact({ id: 'ct1' })] });
+    const { result } = mergeData(
+      makeData(),
+      makeData({ companies: [company], opportunities: [makeOpp({ id: 'o1', company_id: 'c1', contact_ids: ['ct1'] })] }),
+    );
+    expect(result.opportunities[0].contact_ids).toEqual(['ct1']);
+  });
+});
+
+describe('applyDeleteCompany', () => {
+  it('removes the company, removes its primary opps, and nulls via references', () => {
+    const data = makeData({
+      companies: [makeCompany({ id: 'c1' }), makeCompany({ id: 'c2' })],
+      opportunities: [
+        makeOpp({ id: 'primary', company_id: 'c1' }),
+        makeOpp({ id: 'via', company_id: 'c2', via_company_id: 'c1' }),
+      ],
+    });
+    const { newData } = applyDeleteCompany(data, 'c1');
+    expect(newData.companies.map(c => c.id)).toEqual(['c2']);
+    expect(newData.opportunities.map(o => o.id)).toEqual(['via']);
+    expect(newData.opportunities.find(o => o.id === 'via')!.via_company_id).toBeNull();
   });
 });
