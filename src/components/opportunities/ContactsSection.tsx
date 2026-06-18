@@ -60,7 +60,7 @@ export default function ContactsSection({ opportunity }: Props) {
           <div key={contact.id} className="text-sm border rounded p-2 flex justify-between items-start">
             <div>
               <div className="font-medium">{contact.name} {contact.title && <span className="text-muted-foreground text-xs">— {contact.title}</span>}</div>
-              {contact.linkedin && <a href={contact.linkedin} target="_blank" className="text-xs underline text-blue-600">LinkedIn</a>}
+              {contact.linkedin && <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="text-xs underline text-blue-600">LinkedIn</a>}
               {contact.notes && <div className="text-xs mt-1 text-muted-foreground">{contact.notes}</div>}
             </div>
             <button onClick={() => unlinkContactFromOpp(opportunity.id, contact.id)} className="text-xs text-destructive">unlink</button>
