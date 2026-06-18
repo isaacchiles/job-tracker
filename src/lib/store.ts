@@ -533,16 +533,8 @@ export const useAppStore = create<AppStore>()(
   })
 );
 
-// Auto-persist on any data change (in addition to action-level debouncing)
-useAppStore.subscribe(
-  (state) => state.data,
-  () => {
-    // The actions already call schedulePersist; this is belt-and-suspenders
-  },
-  { equalityFn: (a, b) => a === b } // reference equality for whole data blob
-);
-
-// Convenience: hydrate on import (called from main/App on mount if needed)
+// Convenience: re-read persisted state into the store on demand.
+// (Not called on mount — the store already initializes from storage at module load.)
 export function hydrateStore() {
   const store = useAppStore.getState();
   store.loadFromStorage();
