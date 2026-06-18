@@ -8,10 +8,30 @@ import type {
 } from './types';
 
 /**
- * Generate UUID (browser crypto)
+ * Generate a v4 UUID.
+ *
+ * `crypto.randomUUID()` requires a secure context, and `file://` (how the
+ * single-file JobTracker.html is opened) is NOT secure in some browsers, where
+ * `crypto.randomUUID` can be undefined. Feature-detect and fall back to a
+ * getRandomValues-based v4 UUID (or Math.random as a last resort).
  */
 export function generateId(): string {
-  return crypto.randomUUID();
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  const bytes = new Uint8Array(16);
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  // RFC 4122 §4.4: set version (4) and variant (10xx) bits.
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+  const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 /**
