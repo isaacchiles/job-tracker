@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 import { viteSingleFile } from 'vite-plugin-singlefile'
+import { readFileSync } from 'node:fs'
+
+const pkg = JSON.parse(readFileSync(path.resolve(__dirname, './package.json'), 'utf-8'))
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -48,6 +51,12 @@ export default defineConfig(({ mode }) => {
     // Relative base for the single-file build so it works when served from a
     // project subpath (e.g. GitHub Pages: /job-tracker/) or opened via file://.
     base: isSingleFile ? './' : '/',
+    // Compile-time build identifiers, surfaced in the UI footer for version
+    // tracking. BUILD_SHA is passed in by the build command (short git SHA).
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      __BUILD_SHA__: JSON.stringify(process.env.BUILD_SHA ?? ''),
+    },
     plugins,
     resolve: {
       alias: {

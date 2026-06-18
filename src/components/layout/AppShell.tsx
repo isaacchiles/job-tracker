@@ -41,7 +41,7 @@ export default function AppShell({ children }: AppShellProps) {
           <div className="h-8 w-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">J</div>
           <div>
             <div className="font-semibold tracking-tight">JobTracker</div>
-            <div className="text-[10px] text-muted-foreground -mt-0.5">local • v0.2</div>
+            <div className="text-[10px] text-muted-foreground -mt-0.5">v{__APP_VERSION__}{__BUILD_SHA__ ? ` · ${__BUILD_SHA__}` : ''}</div>
           </div>
         </div>
 
