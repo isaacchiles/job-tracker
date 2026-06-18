@@ -44,10 +44,8 @@ export default function CompaniesView() {
   }, [companies, opportunities]);
 
   const handleAddCompany = React.useCallback(() => {
-    console.log('handleAddCompany called');
     setEditingCompany(undefined);
     setModalOpen(true);
-    console.log('setModalOpen(true) called');
   }, []);
 
   const handleQuickAddOpp = React.useCallback((companyId: string) => {
@@ -139,10 +137,8 @@ export default function CompaniesView() {
             </button>
             <button
               onClick={() => {
-                console.log('Edit button clicked for company:', company.name);
                 setEditingCompany(company);
                 setModalOpen(true);
-                console.log('Edit: setModalOpen(true) called');
               }}
               className="underline hover:no-underline"
             >
@@ -170,17 +166,9 @@ export default function CompaniesView() {
   });
 
   const closeModal = React.useCallback(() => {
-    console.log('closeModal called');
     setModalOpen(false);
     setEditingCompany(undefined);
   }, []);
-
-  // Debug: log only on actual modalOpen changes (to detect if parent is thrashing)
-  React.useEffect(() => {
-    if (modalOpen) {
-      console.log('CompaniesView: modalOpen flipped to true, editing:', editingCompany ? editingCompany.name : 'new');
-    }
-  }, [modalOpen, editingCompany]);
 
   return (
     <div>

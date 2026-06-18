@@ -38,9 +38,6 @@ interface CompanyFormModalProps {
 }
 
 export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalProps) {
-  if (isOpen) {
-    console.log('CompanyFormModal rendering, isOpen:', isOpen, 'company:', company ? company.name : 'new');
-  }
   const addCompany = useAppStore((s) => s.addCompany);
   const updateCompany = useAppStore((s) => s.updateCompany);
 
@@ -77,7 +74,6 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
   });
 
   React.useEffect(() => {
-    console.log('CompanyFormModal useEffect, isOpen:', isOpen, 'company:', company ? company.name : 'new');
     if (isOpen) {
       if (company) {
         reset({
@@ -101,7 +97,6 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
   }, [isOpen, company]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = (data: any) => {
-    console.log('CompanyForm onSubmit called, raw data:', data);
     const input = {
       name: data.name,
       website: data.website || null,
@@ -115,19 +110,15 @@ export function CompanyFormModal({ isOpen, onClose, company }: CompanyFormModalP
     };
 
     if (company) {
-      console.log('Updating company', company.id, 'with:', input);
       updateCompany(company.id, input as any);
       toast.success(`Company "${input.name}" updated`);
     } else {
-      console.log('Calling addCompany with:', input);
       const res = addCompany(input as any);
-      console.log('addCompany result:', res);
       if (res.warning) {
         toast.warning(res.warning);
       }
       toast.success(`Company "${input.name}" added`);
     }
-    console.log('onSubmit complete, calling onClose');
     onClose();
   };
 
