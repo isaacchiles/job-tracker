@@ -474,11 +474,13 @@ export const useAppStore = create<AppStore>()(
 
       getAllOpenTasksSorted() {
         const data = get().data;
-        const result: Array<{ task: Task; opp: Opportunity; company: Company }> = [];
+        const result: Array<{ task: Task; opp: Opportunity; company: Company | null }> = [];
 
         data.opportunities.forEach(opp => {
-          const company = data.companies.find(c => c.id === opp.company_id);
-          if (!company) return;
+          // company may be null: opportunities can exist before a company is
+          // assigned (or after their company was deleted). We still surface
+          // their open tasks rather than silently dropping them.
+          const company = data.companies.find(c => c.id === opp.company_id) || null;
 
           opp.tasks
             .filter(t => !t.done)

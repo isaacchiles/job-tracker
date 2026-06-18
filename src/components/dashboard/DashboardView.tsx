@@ -90,7 +90,7 @@ export default function DashboardView() {
                         <span className="font-medium">{task.title}</span>
                       </td>
                       <td className="p-2 text-muted-foreground">
-                        {opp.role_title} @ {company.name}
+                        {opp.role_title} @ {company?.name || 'No company'}
                       </td>
                       <td className="p-2 text-right text-xs text-muted-foreground tabular-nums">
                         {task.due || 'No due'} {overdue && <span className="text-red-600 font-medium">• OVERDUE</span>}
