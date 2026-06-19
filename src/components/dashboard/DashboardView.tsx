@@ -1,6 +1,6 @@
 import { useAppStore } from '@/lib/store';
 import { isOverdue } from '@/lib/utils';
-import { STAGES, STAGE_COLORS } from '@/lib/constants';
+import { STAGES, STAGE_BORDER_COLORS, STAGE_COUNT_COLORS } from '@/lib/constants';
 
 export default function DashboardView() {
   const { data, getCompaniesWithStats, getUpcomingTasks, toggleTaskDone } = useAppStore();
@@ -25,25 +25,17 @@ export default function DashboardView() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Pipeline overview and upcoming next actions (sorted by due date).</p>
-      </div>
-
-      {/* Pipeline overview - visual cards with colors */}
+      {/* Pipeline overview */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
         {STAGES.map(stage => (
-          <div 
-            key={stage} 
-            className={`rounded-xl border p-4 hover:bg-accent/50 transition cursor-default ${STAGE_COLORS[stage]}`}
+          <div
+            key={stage}
+            className="rounded-xl border bg-card p-4 hover:bg-muted/30 transition cursor-default"
+            style={{ borderTop: `3px solid ${STAGE_BORDER_COLORS[stage]}` }}
           >
-            <div className="text-sm font-medium">{stage}</div>
-            <div className="mt-1 text-3xl font-semibold tabular-nums">{stageCounts[stage] || 0}</div>
-            <div className="mt-1 h-1.5 bg-current/20 rounded">
-              <div 
-                className="h-1.5 bg-current rounded transition-all" 
-                style={{ width: `${Math.min(100, (stageCounts[stage] || 0) * 10)}%` }}
-              />
+            <div className="text-xs font-medium text-muted-foreground mb-2.5 truncate">{stage}</div>
+            <div className={`text-3xl font-bold tabular-nums ${STAGE_COUNT_COLORS[stage]}`}>
+              {stageCounts[stage] || 0}
             </div>
           </div>
         ))}
@@ -73,10 +65,10 @@ export default function DashboardView() {
                 {upcoming.map(({ task, opp, company }: { task: any; opp: any; company: any }) => {
                   const overdue = isOverdue(task);
                   return (
-                    <tr 
-                      key={task.id} 
+                    <tr
+                      key={task.id}
                       onClick={() => handleClickTask(opp)}
-                      className={`cursor-pointer hover:bg-accent/30 ${overdue ? 'bg-red-50 dark:bg-red-950/30' : ''}`}
+                      className="cursor-pointer hover:bg-accent/30"
                     >
                       <td className="p-2" onClick={(e) => handleToggleTask(e, opp.id, task.id)}>
                         <input 
@@ -93,7 +85,15 @@ export default function DashboardView() {
                         {opp.role_title} @ {company?.name || 'No company'}
                       </td>
                       <td className="p-2 text-right text-xs text-muted-foreground tabular-nums">
-                        {task.due || 'No due'} {overdue && <span className="text-red-600 font-medium">• OVERDUE</span>}
+                        {task.due || 'No due'}
+                        {overdue && (
+                          <span
+                            className="ml-1.5 text-xs font-semibold px-1.5 py-0.5 rounded"
+                            style={{ background: '#FDE68A', color: '#92400E' }}
+                          >
+                            Overdue
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );

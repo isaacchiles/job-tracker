@@ -40,3 +40,22 @@ export const HEADCOUNT_BUCKETS = [
 ];
 
 export const APP_VERSION = 1;
+
+// ── Stage colors for dashboard cards (warm-shifted) ───────────────────────
+export const STAGE_BORDER_COLORS: Record<PipelineStage, string> = {
+  Researching:   '#3D7AB5',
+  Applied:       '#C08030',
+  Interviewing:  '#7A55B0',
+  Offer:         '#3A8A60',
+  'Closed Won':  '#2A7850',
+  'Closed Lost': '#8A7870',
+};
+
+export const STAGE_COUNT_COLORS: Record<PipelineStage, string> = {
+  Researching:   'text-blue-700   dark:text-blue-300',
+  Applied:       'text-amber-700  dark:text-amber-400',
+  Interviewing:  'text-violet-700 dark:text-violet-300',
+  Offer:         'text-emerald-700 dark:text-emerald-400',
+  'Closed Won':  'text-emerald-800 dark:text-emerald-300',
+  'Closed Lost': 'text-stone-500   dark:text-stone-400',
+};
