@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, KanbanSquare, Users, Briefcase, Moon, Sun, Download } from 'lucide-react'
+import { LayoutDashboard, KanbanSquare, Users, Briefcase, Moon, Sun, Settings } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 interface AppShellProps {
   children: ReactNode
+  onOpenDrawer: () => void
 }
 
 const navItems = [
@@ -21,7 +22,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/opportunities':  'Opportunities',
 }
 
-export default function AppShell({ children }: AppShellProps) {
+export default function AppShell({ children, onOpenDrawer }: AppShellProps) {
   const [isDark, setIsDark] = useState(false)
   const location = useLocation()
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'JobTracker'
@@ -39,11 +40,6 @@ export default function AppShell({ children }: AppShellProps) {
     setIsDark(next)
     document.documentElement.classList.toggle('dark', next)
     localStorage.setItem('jobtracker:theme', next ? 'dark' : 'light')
-  }
-
-  const handleExport = () => {
-    const state = (window as any).useAppStore?.getState?.()
-    state?.exportData?.()
   }
 
   return (
@@ -107,12 +103,13 @@ export default function AppShell({ children }: AppShellProps) {
             </span>
             <div className="flex gap-1.5">
               <button
-                onClick={handleExport}
-                title="Export data as JSON"
+                onClick={onOpenDrawer}
+                title="Data & Settings"
                 className="h-7 w-7 flex items-center justify-center rounded-md border-none cursor-pointer"
                 style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}
+                aria-label="Open data & settings"
               >
-                <Download className="h-3.5 w-3.5" />
+                <Settings className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={toggleDark}
@@ -125,11 +122,23 @@ export default function AppShell({ children }: AppShellProps) {
               </button>
             </div>
           </div>
-          <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.18)' }}>
-            By{' '}
-            <a href="mailto:isaac.chiles@gmail.com" className="underline hover:text-white/40">
-              Isaac Chiles
-            </a>
+          <div className="text-[10px] space-y-0.5" style={{ color: 'rgba(255,255,255,0.18)' }}>
+            <div>
+              By{' '}
+              <a href="mailto:isaac.chiles@gmail.com" className="underline hover:text-white/40">
+                Isaac Chiles
+              </a>
+            </div>
+            <div>
+              <a
+                href="https://github.com/isaacchiles/job-tracker#readme"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-white/40"
+              >
+                Docs / User guide ↗
+              </a>
+            </div>
           </div>
         </div>
       </aside>
