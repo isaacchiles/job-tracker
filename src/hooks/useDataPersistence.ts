@@ -16,6 +16,8 @@ export function useDataPersistence() {
   const [autoSaveFileName, setAutoSaveFileName] = useState<string | null>(null)
   // FileSystemFileHandle is not in standard TS lib; use unknown and cast at call sites
   const fileHandleRef = useRef<unknown>(null)
+  // Debounce timer for file writes — prevents a write per keystroke
+  const fileWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Handlers (declared first so useEffects below can reference them) ─────────
 
@@ -140,14 +142,16 @@ export function useDataPersistence() {
 
   // ── Effects (after handlers are declared) ────────────────────────────────────
 
-  // Update lastSaved timestamp + auto-flush to chosen file on every data change
+  // Update lastSaved timestamp + debounced auto-flush to chosen file on every data change
   useEffect(() => {
     const unsub = useAppStore.subscribe(
       (s) => s.data,
       () => {
         setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
         if (fileHandleRef.current) {
-          ;(async () => {
+          // Debounce: batch rapid edits — only write after 500ms of quiet
+          if (fileWriteTimerRef.current) clearTimeout(fileWriteTimerRef.current)
+          fileWriteTimerRef.current = setTimeout(async () => {
             try {
               const h = fileHandleRef.current as any // eslint-disable-line @typescript-eslint/no-explicit-any
               const current = useAppStore.getState().data
@@ -157,11 +161,14 @@ export function useDataPersistence() {
             } catch {
               // permission or other error; will retry on next flush
             }
-          })()
+          }, 500)
         }
       }
     )
-    return unsub
+    return () => {
+      unsub()
+      if (fileWriteTimerRef.current) clearTimeout(fileWriteTimerRef.current)
+    }
   }, [])
 
   // Backup reminder toast on first mount
@@ -266,7 +273,7 @@ export function useDataPersistence() {
   const executeImport = useCallback(() => {
     if (!importFileData) return
     try {
-      const result = importData(importFileData, importMode)
+      const result = importData(importFileData as import('../lib/types').AppData, importMode)
       toast.success(`Imported (${importMode}): ${result.companiesAdded ?? 0} companies, ${result.opportunitiesAdded ?? 0} opps added`)
       closeImportWizard()
     } catch (err: unknown) {

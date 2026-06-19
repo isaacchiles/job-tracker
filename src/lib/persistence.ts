@@ -112,7 +112,10 @@ export function importData(
     resultData = {
       ...incomingForData,
       version: 1,
-      meta: { ...(incomingForData.meta || {}), last_exported_at: new Date().toISOString() },
+      // Preserve the imported file's original last_exported_at so the backup-age
+      // display correctly reflects when that data was last backed up.
+      // (The pre-import backup is of the old data, not this newly-loaded state.)
+      meta: { ...(incomingForData.meta || {}) },
     };
     // Count as added for replace
     stats.companiesAdded = resultData.companies.length;
@@ -128,7 +131,8 @@ export function importData(
     const { result, warnings: mergeWarnings, stats: mergeStats } = mergeData(current, incomingForData);
     resultData = {
       ...result,
-      meta: { ...(result.meta || {}), last_exported_at: new Date().toISOString() },
+      // Same rationale: preserve the imported file's stamp, not the current time.
+      meta: { ...(result.meta || {}) },
     };
     warnings = [...warnings, ...mergeWarnings];
 
